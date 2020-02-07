@@ -1,0 +1,15 @@
+{
+  "publisher": "qub",
+  "project": "http-java",
+  "version": "1",
+  "java": {
+    "version": "1.8",
+    "dependencies": [
+      {
+        "publisher": "qub",
+        "project": "qub-java",
+        "version": "165"
+      }
+    ]
+  }
+}
