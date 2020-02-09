@@ -13,7 +13,7 @@ public class JavaHttpClientTests
         {
             HttpClientTests.test(runner, JavaHttpClientTests::createHttpClient);
 
-            runner.testGroup("send(MutableHttpRequest)", runner.skipIfNoNetworkConnection(), () ->
+            runner.testGroup("send(MutableHttpRequest)", () ->
             {
                 runner.test("with GET request to https://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill", (Test test) ->
                 {

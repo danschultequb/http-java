@@ -14,7 +14,7 @@ public interface HttpClientTests
                     test.assertThrows(() -> httpClient.send(null), new PreConditionFailure("request cannot be null."));
                 });
 
-                runner.test("with unknown host", runner.skipIfNoNetworkConnection(), (Test test) ->
+                runner.test("with unknown host", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
                     final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, URL.parse("http://www.idontexistbecauseimnotagoodurl.com").await());
@@ -22,7 +22,7 @@ public interface HttpClientTests
                         new RuntimeException(new java.net.UnknownHostException("www.idontexistbecauseimnotagoodurl.com")));
                 });
 
-                runner.test("with HEAD request to www.example.com", runner.skipIfNoNetworkConnection(), (Test test) ->
+                runner.test("with HEAD request to www.example.com", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
                     final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.HEAD, URL.parse("http://www.example.com").await());
@@ -44,7 +44,7 @@ public interface HttpClientTests
                     }
                 });
 
-                runner.test("with GET request to www.example.com", runner.skipIfNoNetworkConnection(), (Test test) ->
+                runner.test("with GET request to www.example.com", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
                     final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, URL.parse("http://www.example.com").await());
@@ -67,7 +67,7 @@ public interface HttpClientTests
                     }
                 });
 
-                runner.test("with GET request to http://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill", runner.skipIfNoNetworkConnection(), (Test test) ->
+                runner.test("with GET request to http://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
                     final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, URL.parse("http://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill").await());

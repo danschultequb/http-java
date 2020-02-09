@@ -3,19 +3,31 @@ package qub;
 public class BasicHttpClient implements HttpClient
 {
     private final Network network;
+    private final DNS dns;
 
-    private BasicHttpClient(Network network)
+    private BasicHttpClient(Network network, DNS dns)
     {
         PreCondition.assertNotNull(network, "network");
+        PreCondition.assertNotNull(dns, "dns");
 
         this.network = network;
+        this.dns = dns;
     }
 
     public static BasicHttpClient create(Network network)
     {
         PreCondition.assertNotNull(network, "network");
 
-        return new BasicHttpClient(network);
+        final DNS dns = DNS.create();
+        return BasicHttpClient.create(network, dns);
+    }
+
+    public static BasicHttpClient create(Network network, DNS dns)
+    {
+        PreCondition.assertNotNull(network, "network");
+        PreCondition.assertNotNull(dns, "dns");
+
+        return new BasicHttpClient(network, dns);
     }
 
     @Override
@@ -29,7 +41,7 @@ public class BasicHttpClient implements HttpClient
         {
             final URL requestUrl = request.getURL();
             final String requestHost = requestUrl.getHost();
-            final IPv4Address requestIPAddress = this.network.getDNS().resolveHost(requestHost).await();
+            final IPv4Address requestIPAddress = this.dns.resolveHost(requestHost).await();
 
             Integer requestPort = requestUrl.getPort();
             if (requestPort == null)
