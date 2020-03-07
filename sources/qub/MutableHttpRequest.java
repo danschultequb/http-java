@@ -38,7 +38,7 @@ public class MutableHttpRequest implements HttpRequest
     @Override
     public HttpMethod getMethod()
     {
-        return method;
+        return this.method;
     }
 
     public MutableHttpRequest setMethod(HttpMethod method)
@@ -53,7 +53,7 @@ public class MutableHttpRequest implements HttpRequest
     @Override
     public URL getURL()
     {
-        return url;
+        return this.url;
     }
 
     public Result<Void> setUrl(String urlString)
@@ -76,7 +76,7 @@ public class MutableHttpRequest implements HttpRequest
     @Override
     public String getHttpVersion()
     {
-        return httpVersion;
+        return this.httpVersion;
     }
 
     public void setHttpVersion(String httpVersion)
@@ -89,26 +89,26 @@ public class MutableHttpRequest implements HttpRequest
     @Override
     public HttpHeaders getHeaders()
     {
-        return headers;
+        return this.headers;
     }
 
     public MutableHttpRequest setHeader(String headerName, String headerValue)
     {
-        headers.set(headerName, headerValue);
+        this.headers.set(headerName, headerValue);
 
         return this;
     }
 
     public MutableHttpRequest setHeader(String headerName, int headerValue)
     {
-        headers.set(headerName, headerValue);
+        this.headers.set(headerName, headerValue);
 
         return this;
     }
 
     public MutableHttpRequest setHeader(String headerName, long headerValue)
     {
-        headers.set(headerName, headerValue);
+        this.headers.set(headerName, headerValue);
 
         return this;
     }
@@ -116,7 +116,7 @@ public class MutableHttpRequest implements HttpRequest
     @Override
     public ByteReadStream getBody()
     {
-        return body;
+        return this.body;
     }
 
     public MutableHttpRequest setBody(long contentLength, ByteReadStream body)
@@ -142,7 +142,7 @@ public class MutableHttpRequest implements HttpRequest
     public MutableHttpRequest setBody(byte[] bodyBytes)
     {
         final int contentLength = bodyBytes == null ? 0 : bodyBytes.length;
-        setBody(contentLength, contentLength == 0 ? null : new InMemoryByteStream(bodyBytes).endOfStream());
+        this.setBody(contentLength, contentLength == 0 ? null : new InMemoryByteStream(bodyBytes).endOfStream());
 
         return this;
     }

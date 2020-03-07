@@ -53,16 +53,17 @@ public interface MutableHttpHeadersTests
                 runner.test("when empty", (Test test) ->
                 {
                     final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    headers.clear();
+                    final MutableHttpHeaders clearResult = headers.clear();
+                    test.assertSame(headers, clearResult);
                     test.assertEqual(0, headers.getCount());
                 });
 
                 runner.test("when not empty", (Test test) ->
                 {
-                    final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    headers.set("a", "b");
+                    final MutableHttpHeaders headers = new MutableHttpHeaders().set("a", "b");
                     test.assertEqual(1, headers.getCount());
-                    headers.clear();
+                    final MutableHttpHeaders clearResult = headers.clear();
+                    test.assertSame(headers, clearResult);
                     test.assertEqual(0, headers.getCount());
                 });
             });
@@ -72,13 +73,15 @@ public interface MutableHttpHeadersTests
                 runner.test("with null header", (Test test) ->
                 {
                     final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    test.assertThrows(() -> headers.set(null), new PreConditionFailure("header cannot be null."));
+                    test.assertThrows(() -> headers.set(null),
+                        new PreConditionFailure("header cannot be null."));
                 });
 
                 runner.test("with non-null header", (Test test) ->
                 {
                     final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    headers.set(new HttpHeader("header-name", "header-value"));
+                    final MutableHttpHeaders setResult = headers.set(new HttpHeader("header-name", "header-value"));
+                    test.assertSame(headers, setResult);
                     test.assertEqual("header-value", headers.get("header-name").await().getValue());
                 });
             });
@@ -88,27 +91,31 @@ public interface MutableHttpHeadersTests
                 runner.test("with null header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    test.assertThrows(() -> headers.set(null, "header-value"), new PreConditionFailure("headerName cannot be null."));
+                    test.assertThrows(() -> headers.set(null, "header-value"),
+                        new PreConditionFailure("headerName cannot be null."));
                 });
 
                 runner.test("with empty header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    test.assertThrows(() -> headers.set("", "header-value"), new PreConditionFailure("headerName cannot be empty."));
+                    test.assertThrows(() -> headers.set("", "header-value"),
+                        new PreConditionFailure("headerName cannot be empty."));
                 });
 
                 runner.test("with null header value", (Test test) ->
                 {
                     final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    test.assertThrows(() -> headers.set("header-name", null), new PreConditionFailure("headerValue cannot be null."));
+                    test.assertThrows(() -> headers.set("header-name", null),
+                        new PreConditionFailure("headerValue cannot be null."));
                     test.assertFalse(headers.contains("header-name"));
                 });
 
                 runner.test("with empty header value", (Test test) ->
                 {
                     final MutableHttpHeaders headers = new MutableHttpHeaders();
-                    test.assertThrows(() -> headers.set("header-name", ""), new PreConditionFailure("headerValue cannot be empty."));
-                    test.assertFalse(headers.contains("header-name"));
+                    final MutableHttpHeaders setResult = headers.set("header-name", "");
+                    test.assertSame(headers, setResult);
+                    test.assertEqual(new HttpHeader("header-name", ""), headers.get("header-name").await());
                 });
 
                 runner.test("with non-existing header", (Test test) ->

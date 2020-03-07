@@ -31,7 +31,7 @@ public class HttpHeader
     public HttpHeader(String name, String value)
     {
         PreCondition.assertNotNullAndNotEmpty(name, "name");
-        PreCondition.assertNotNullAndNotEmpty(value, "value");
+        PreCondition.assertNotNull(value, "value");
 
         this.name = name;
         this.value = value;

@@ -36,20 +36,21 @@ public class MutableHttpHeaders implements HttpHeaders
     /**
      * Remove all headers create this HTTP header collection.
      */
-    public void clear()
+    public MutableHttpHeaders clear()
     {
         this.headerMap.clear();
+        return this;
     }
 
     /**
      * Set the provided header within this HTTP headers collection.
      * @param header The header to set.
      */
-    public void set(HttpHeader header)
+    public MutableHttpHeaders set(HttpHeader header)
     {
         PreCondition.assertNotNull(header, "header");
 
-        this.set(header.getName(), header.getValue());
+        return this.set(header.getName(), header.getValue());
     }
 
     /**
@@ -57,11 +58,11 @@ public class MutableHttpHeaders implements HttpHeaders
      * @param headerName The name of the header to set.
      * @param headerValue The value of the header to set.
      */
-    public void set(String headerName, int headerValue)
+    public MutableHttpHeaders set(String headerName, int headerValue)
     {
         PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
 
-        this.set(headerName, Integers.toString(headerValue));
+        return this.set(headerName, Integers.toString(headerValue));
     }
 
     /**
@@ -69,11 +70,11 @@ public class MutableHttpHeaders implements HttpHeaders
      * @param headerName The name of the header to set.
      * @param headerValue The value of the header to set.
      */
-    public void set(String headerName, long headerValue)
+    public MutableHttpHeaders set(String headerName, long headerValue)
     {
         PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
 
-        this.set(headerName, Longs.toString(headerValue));
+        return this.set(headerName, Longs.toString(headerValue));
     }
 
     /**
@@ -81,12 +82,13 @@ public class MutableHttpHeaders implements HttpHeaders
      * @param headerName The name of the header to set.
      * @param headerValue The value of the header to set.
      */
-    public void set(String headerName, String headerValue)
+    public MutableHttpHeaders set(String headerName, String headerValue)
     {
         PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
-        PreCondition.assertNotNullAndNotEmpty(headerValue, "headerValue");
+        PreCondition.assertNotNull(headerValue, "headerValue");
 
         this.headerMap.set(MutableHttpHeaders.getHeaderKey(headerName), new HttpHeader(headerName, headerValue));
+        return this;
     }
 
     @Override

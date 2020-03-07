@@ -6,34 +6,34 @@ public interface HttpHeaderTests
     {
         runner.testGroup(HttpHeader.class, () ->
         {
-            runner.testGroup("create(String,String)", () ->
+            runner.testGroup("constructor(String,String)", () ->
             {
-                runner.test("with null name", (Test test) ->
+                final Action3<String,String,Throwable> constructorErrorTest = (String name, String value, Throwable expected) ->
                 {
-                    test.assertThrows(() -> new HttpHeader(null, "V"), new PreConditionFailure("name cannot be null."));
-                });
+                    runner.test("with " + English.andList(Iterable.create(name, value).map(Strings::escapeAndQuote)), (Test test) ->
+                    {
+                        test.assertThrows(() -> new HttpHeader(name, value), expected);
+                    });
+                };
 
-                runner.test("with empty name", (Test test) ->
-                {
-                    test.assertThrows(() -> new HttpHeader("", "V"), new PreConditionFailure("name cannot be empty."));
-                });
+                constructorErrorTest.run(null, "V", new PreConditionFailure("name cannot be null."));
+                constructorErrorTest.run("", "V", new PreConditionFailure("name cannot be empty."));
+                constructorErrorTest.run("N", null, new PreConditionFailure("value cannot be null."));
 
-                runner.test("with null value", (Test test) ->
+                final Action2<String,String> constructorTest = (String name, String value) ->
                 {
-                    test.assertThrows(() -> new HttpHeader("N", null), new PreConditionFailure("value cannot be null."));
-                });
+                    runner.test("with " + English.andList(Iterable.create(name, value).map(Strings::escapeAndQuote)), (Test test) ->
+                    {
+                        final HttpHeader header = new HttpHeader(name, value);
+                        test.assertNotNull(header);
+                        test.assertEqual(name, header.getName());
+                        test.assertEqual(value, header.getValue());
+                    });
+                };
 
-                runner.test("with empty value", (Test test) ->
-                {
-                    test.assertThrows(() -> new HttpHeader("N", ""), new PreConditionFailure("value cannot be empty."));
-                });
-
-                runner.test("with name and value", (Test test) ->
-                {
-                    final HttpHeader header = new HttpHeader("user-agent", "qub-browser");
-                    test.assertEqual("user-agent", header.getName());
-                    test.assertEqual("qub-browser", header.getValue());
-                });
+                constructorTest.run("N", "");
+                constructorTest.run("N", "V");
+                constructorTest.run("user-agent", "qub-browser");
             });
 
             runner.testGroup("equals(Object)", () ->
