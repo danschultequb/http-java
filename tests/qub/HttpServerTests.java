@@ -90,7 +90,7 @@ public interface HttpServerTests
                 {
                     try (final HttpServer server = HttpServerTests.createHttpServer(test))
                     {
-                        test.assertTrue(server.addPath("/", (HttpRequest request) ->
+                        test.assertNull(server.addPath("/", (HttpRequest request) ->
                             new MutableHttpResponse()
                                 .setStatusCode(200)
                                 .setBody("Hello!")).await());
@@ -116,7 +116,7 @@ public interface HttpServerTests
                 {
                     try (final HttpServer server = HttpServerTests.createHttpServer(test))
                     {
-                        test.assertTrue(server.addPath("/", (HttpRequest request) -> null).await());
+                        test.assertNull(server.addPath("/", (HttpRequest request) -> null).await());
                         test.assertThrows(() -> server.addPath("/", (HttpRequest request) -> null).await(),
                             new AlreadyExistsException("The path \"/\" already exists."));
                     }
@@ -126,7 +126,7 @@ public interface HttpServerTests
                 {
                     try (final HttpServer server = HttpServerTests.createHttpServer(test))
                     {
-                        test.assertTrue(server.addPath("/redfish", (HttpRequest request) -> null).await());
+                        test.assertNull(server.addPath("/redfish", (HttpRequest request) -> null).await());
                         test.assertEqual(Array.create("/redfish"), server.getPaths().map(PathPattern::toString));
                     }
                 });
@@ -218,7 +218,7 @@ public interface HttpServerTests
                 {
                     try (final HttpServer server = HttpServerTests.createHttpServer(test))
                     {
-                        test.assertTrue(server.addPath("/things/*", (Indexable<String> trackedValues, HttpRequest request) ->
+                        test.assertNull(server.addPath("/things/*", (Indexable<String> trackedValues, HttpRequest request) ->
                              new MutableHttpResponse()
                                  .setStatusCode(200)
                                  .setBody("Hello, " + trackedValues.first() + "!")).await());

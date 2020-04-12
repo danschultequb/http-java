@@ -36,7 +36,7 @@ public interface HttpResponse extends Disposable
      */
     default Result<HttpHeader> getHeader(String headerName)
     {
-        return getHeaders().get(headerName);
+        return this.getHeaders().get(headerName);
     }
 
     /**
@@ -46,7 +46,7 @@ public interface HttpResponse extends Disposable
      */
     default Result<String> getHeaderValue(String headerName)
     {
-        return getHeaders().getValue(headerName);
+        return this.getHeaders().getValue(headerName);
     }
 
     /**
@@ -56,8 +56,11 @@ public interface HttpResponse extends Disposable
      */
     default Result<Long> getContentLength()
     {
-        return getHeaderValue(HttpHeader.ContentLengthName)
-            .then((String headerValue) -> Longs.parse(headerValue).await());
+        return Result.create(() ->
+        {
+            final String contentLengthString = this.getHeaderValue(HttpHeader.ContentLengthName).await();
+            return Longs.parse(contentLengthString).await();
+        });
     }
 
     /**

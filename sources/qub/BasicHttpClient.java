@@ -53,27 +53,28 @@ public class BasicHttpClient implements HttpClient
 
             try (final TCPClient tcpClient = this.network.createTCPClient(requestIPAddress, requestPort).await())
             {
-                final InMemoryByteStream requestBeforeBodyByteStream = new InMemoryByteStream();
-                final CharacterWriteStream requestBeforeBodyLineStream = requestBeforeBodyByteStream.asCharacterWriteStream(CharacterEncoding.UTF_8, "\r\n");
+                final BufferedByteWriteStream tcpClientBufferedWriteStream = new BufferedByteWriteStream(tcpClient);
+                final CharacterToByteWriteStream tcpClientWriteStream = CharacterToByteWriteStream.create(tcpClientBufferedWriteStream)
+                    .setCharacterEncoding(CharacterEncoding.UTF_8)
+                    .setNewLine("\r\n");
                 String httpVersion = request.getHttpVersion();
                 if (Strings.isNullOrEmpty(httpVersion))
                 {
                     httpVersion = "HTTP/1.1";
                 }
-                requestBeforeBodyLineStream.writeLine("%s %s %s", request.getMethod(), request.getURL(), httpVersion);
+                tcpClientWriteStream.writeLine("%s %s %s", request.getMethod(), request.getURL(), httpVersion).await();
                 for (final HttpHeader header : request.getHeaders())
                 {
-                    requestBeforeBodyLineStream.writeLine("%s:%s", header.getName(), header.getValue());
+                    tcpClientWriteStream.writeLine("%s:%s", header.getName(), header.getValue()).await();
                 }
-                requestBeforeBodyLineStream.writeLine();
-                requestBeforeBodyByteStream.endOfStream();
+                tcpClientWriteStream.writeLine().await();
 
-                tcpClient.writeAllBytes(requestBeforeBodyByteStream).await();
                 final ByteReadStream requestBodyStream = request.getBody();
                 if (requestBodyStream != null)
                 {
-                    tcpClient.writeAllBytes(requestBodyStream).await();
+                    tcpClientWriteStream.writeAll(requestBodyStream).await();
                 }
+                tcpClientBufferedWriteStream.flush().await();
 
                 final BufferedByteReadStream bufferedByteReadStream = new BufferedByteReadStream(tcpClient);
                 final CharacterReadStream responseCharacterReadStream = bufferedByteReadStream.asCharacterReadStream();
@@ -118,7 +119,7 @@ public class BasicHttpClient implements HttpClient
                             }
                             else
                             {
-                                responseBodyStream.writeAllBytes(bytesRead).await();
+                                responseBodyStream.writeAll(bytesRead).await();
                                 bytesToRead -= bytesRead.length;
                             }
                         }

@@ -24,14 +24,13 @@ public class HttpServer implements Disposable
         this.tcpServer = tcpServer;
         this.asyncRunner = asyncRunner;
         this.paths = Map.create();
-        notFoundAction = (HttpRequest request) ->
+        this.notFoundAction = (HttpRequest request) ->
         {
-            final MutableHttpResponse response = new MutableHttpResponse();
-            response.setHTTPVersion(request.getHttpVersion());
-            response.setStatusCode(404);
-            response.setReasonPhrase("Not Found");
-            response.setBody("<html><body>404: Not Found</body></html>");
-            return response;
+            return new MutableHttpResponse()
+                .setHTTPVersion(request.getHttpVersion())
+                .setStatusCode(404)
+                .setReasonPhrase("Not Found")
+                .setBody("<html><body>404: Not Found</body></html>");
         };
     }
 
@@ -43,7 +42,7 @@ public class HttpServer implements Disposable
     {
         PreCondition.assertFalse(isDisposed(), "isDisposed()");
 
-        return tcpServer.getLocalIPAddress();
+        return this.tcpServer.getLocalIPAddress();
     }
 
     /**
@@ -54,62 +53,60 @@ public class HttpServer implements Disposable
     {
         PreCondition.assertFalse(isDisposed(), "isDisposed()");
 
-        return tcpServer.getLocalPort();
+        return this.tcpServer.getLocalPort();
     }
 
     /**
      * Add a new pathString that this HTTP server will respond to.
      * @param pathString The pathString that this HTTP server will respond to.
-     * @return Whether or not the pathString was successfully added.
+     * @return The result of adding the provided path.
      */
-    public Result<Boolean> addPath(String pathString, Function1<HttpRequest,HttpResponse> pathAction)
+    public Result<Void> addPath(String pathString, Function1<HttpRequest,HttpResponse> pathAction)
     {
         PreCondition.assertNotNullAndNotEmpty(pathString, "pathString");
         PreCondition.assertNotNull(pathAction, "pathAction");
 
-        return addPath(pathString, (Indexable<String> pathMatches, HttpRequest request) -> pathAction.run(request));
+        return this.addPath(pathString, (Indexable<String> pathMatches, HttpRequest request) -> pathAction.run(request));
     }
 
     /**
      * Add a new pathString that this HTTP server will respond to.
      * @param pathString The pathString that this HTTP server will respond to.
-     * @return Whether or not the pathString was successfully added.
+     * @return The result of adding the provided path.
      */
-    public Result<Boolean> addPath(String pathString, Function2<Indexable<String>,HttpRequest,HttpResponse> pathAction)
+    public Result<Void> addPath(String pathString, Function2<Indexable<String>,HttpRequest,HttpResponse> pathAction)
     {
         PreCondition.assertNotNullAndNotEmpty(pathString, "pathString");
         PreCondition.assertNotNull(pathAction, "pathAction");
 
-        if (pathString.contains("\\"))
+        return Result.create(() ->
         {
-            pathString = pathString.replaceAll("\\\\", "/");
-        }
-        if (!pathString.startsWith("/"))
-        {
-            pathString = '/' + pathString;
-        }
+            String normalizedPathString = pathString;
+            if (normalizedPathString.contains("\\"))
+            {
+                normalizedPathString = normalizedPathString.replaceAll("\\\\", "/");
+            }
+            if (!normalizedPathString.startsWith("/"))
+            {
+                normalizedPathString = '/' + normalizedPathString;
+            }
 
-        int endIndex = pathString.length();
-        while (1 < endIndex && pathString.charAt(endIndex - 1) == '/')
-        {
-            --endIndex;
-        }
-        pathString = pathString.substring(0, endIndex);
+            int endIndex = normalizedPathString.length();
+            while (1 < endIndex && normalizedPathString.charAt(endIndex - 1) == '/')
+            {
+                --endIndex;
+            }
+            normalizedPathString = normalizedPathString.substring(0, endIndex);
 
-        final PathPattern pathPattern = PathPattern.parse(pathString);
+            final PathPattern pathPattern = PathPattern.parse(normalizedPathString);
 
-        Result<Boolean> result;
-        if (paths.containsKey(pathPattern))
-        {
-            result = Result.error(new AlreadyExistsException("The path " + Strings.escapeAndQuote(pathPattern) + " already exists."));
-        }
-        else
-        {
-            paths.set(pathPattern, pathAction);
-            result = Result.successTrue();
-        }
+            if (paths.containsKey(pathPattern))
+            {
+                throw new AlreadyExistsException("The path " + Strings.escapeAndQuote(pathPattern) + " already exists.");
+            }
 
-        return result;
+            this.paths.set(pathPattern, pathAction);
+        });
     }
 
     /**
@@ -169,10 +166,13 @@ public class HttpServer implements Disposable
                             headerLine = acceptedClientReadStream.readLine().await();
                         }
 
-                        request.getContentLength()
-                            .then((Long contentLength) -> request.setBody(contentLength, acceptedClient))
-                            .catchError()
+                        final Long requestContentLength = request.getContentLength()
+                            .catchError(NotFoundException.class)
                             .await();
+                        if (requestContentLength != null)
+                        {
+                            request.setBody(requestContentLength, acceptedClient);
+                        }
 
                         HttpResponse response;
                         final String pathString = request.getURL().getPath();
@@ -221,10 +221,13 @@ public class HttpServer implements Disposable
                         String reasonPhrase = response.getReasonPhrase();
                         if (Strings.isNullOrEmpty(reasonPhrase))
                         {
-                            reasonPhrase = getReasonPhrase(response.getStatusCode());
+                            reasonPhrase = HttpServer.getReasonPhrase(response.getStatusCode());
                         }
 
-                        final CharacterWriteStream acceptedClientWriteStream = acceptedClient.asCharacterWriteStream("\r\n");
+                        final BufferedByteWriteStream acceptedClientBufferedWriteStream = new BufferedByteWriteStream(acceptedClient);
+                        final CharacterToByteWriteStream acceptedClientWriteStream = CharacterToByteWriteStream.create(acceptedClientBufferedWriteStream)
+                            .setCharacterEncoding(CharacterEncoding.UTF_8)
+                            .setNewLine("\r\n");
                         acceptedClientWriteStream.writeLine("%s %s %s", httpVersion, response.getStatusCode(), reasonPhrase).await();
                         for (final HttpHeader header : response.getHeaders())
                         {
@@ -237,13 +240,14 @@ public class HttpServer implements Disposable
                         {
                             try
                             {
-                                acceptedClient.writeAllBytes(responseBody).await();
+                                acceptedClientWriteStream.writeAll(responseBody).await();
                             }
                             finally
                             {
                                 responseBody.dispose().await();
                             }
                         }
+                        acceptedClientBufferedWriteStream.flush().await();
                     }
                     finally
                     {
@@ -260,13 +264,13 @@ public class HttpServer implements Disposable
      */
     public Iterable<PathPattern> getPaths()
     {
-        return paths.getKeys();
+        return this.paths.getKeys();
     }
 
     @Override
     public boolean isDisposed()
     {
-        return disposed;
+        return this.disposed;
     }
 
     @Override

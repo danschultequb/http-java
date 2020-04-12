@@ -58,7 +58,7 @@ public class HttpHeader
     @Override
     public boolean equals(Object rhs)
     {
-        return rhs instanceof HttpHeader && equals((HttpHeader)rhs);
+        return rhs instanceof HttpHeader && this.equals((HttpHeader)rhs);
     }
 
     /**
@@ -76,6 +76,6 @@ public class HttpHeader
     @Override
     public String toString()
     {
-        return name + ": " + value;
+        return this.name + ": " + this.value;
     }
 }

@@ -91,17 +91,6 @@ public class MutableHttpHeaders implements HttpHeaders
         return this;
     }
 
-    @Override
-    public boolean contains(String headerName)
-    {
-        PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
-
-        return this.get(headerName)
-            .then(() -> true)
-            .catchError(() -> false)
-            .await();
-    }
-
     /**
      * Get the header in this collection that has the provided header name.
      * @param headerName The name of the header to get.
@@ -113,13 +102,6 @@ public class MutableHttpHeaders implements HttpHeaders
 
         return this.headerMap.get(MutableHttpHeaders.getHeaderKey(headerName))
             .convertError(NotFoundException.class, () -> new NotFoundException(headerName));
-    }
-
-    public Result<String> getValue(String headerName)
-    {
-        PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
-
-        return this.get(headerName).then(HttpHeader::getValue);
     }
 
     public Result<HttpHeader> remove(String headerName)

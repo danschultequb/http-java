@@ -87,7 +87,7 @@ public class MutableHttpResponse implements HttpResponse
 
         for (final HttpHeader header : headers)
         {
-            setHeader(header);
+            this.setHeader(header);
         }
 
         return this;
@@ -196,18 +196,13 @@ public class MutableHttpResponse implements HttpResponse
         final InMemoryByteStream bodyStream = new InMemoryByteStream();
         if (!Strings.isNullOrEmpty(body))
         {
-            bodyStream.asCharacterWriteStream().write(body);
+            CharacterWriteStream.create(bodyStream).write(body).await();
+
+            final int bodyStreamByteCount = bodyStream.getCount();
+            this.setHeader(HttpHeader.ContentLengthName, bodyStreamByteCount);
         }
         bodyStream.endOfStream();
-        setBody(bodyStream);
-
-        final int bodyStreamByteCount = bodyStream.getCount();
-        if (bodyStreamByteCount > 0)
-        {
-            setHeader(HttpHeader.ContentLengthName, bodyStreamByteCount);
-        }
-
-        return this;
+        return this.setBody(bodyStream);
     }
 
     @Override

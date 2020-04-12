@@ -28,12 +28,15 @@ public interface HttpClient
     {
         PreCondition.assertNotNullAndNotEmpty(urlString, "urlString");
 
-        return URL.parse(urlString)
-            .then((URL url) -> this.get(url).await());
+        return Result.create(() ->
+        {
+            final URL url = URL.parse(urlString).await();
+            return this.get(url).await();
+        });
     }
 
     default Result<HttpResponse> get(URL url)
     {
-        return send(HttpRequest.get(url));
+        return this.send(HttpRequest.get(url));
     }
 }

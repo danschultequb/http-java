@@ -36,7 +36,7 @@ public interface HttpRequest
      */
     default Result<HttpHeader> getHeader(String headerName)
     {
-        return getHeaders().get(headerName);
+        return this.getHeaders().get(headerName);
     }
 
     /**
@@ -46,7 +46,7 @@ public interface HttpRequest
      */
     default Result<String> getHeaderValue(String headerName)
     {
-        return getHeaders().getValue(headerName);
+        return this.getHeaders().getValue(headerName);
     }
 
     /**
@@ -56,8 +56,11 @@ public interface HttpRequest
      */
     default Result<Long> getContentLength()
     {
-        return getHeaderValue(HttpHeader.ContentLengthName)
-            .then((String headerValue) -> Longs.parse(headerValue).await());
+        return Result.create(() ->
+        {
+            final String headerValue = this.getHeaderValue(HttpHeader.ContentLengthName).await();
+            return Longs.parse(headerValue).await();
+        });
     }
 
     /**
@@ -70,14 +73,19 @@ public interface HttpRequest
     {
         PreCondition.assertNotNullAndNotEmpty(urlString, "urlString");
 
-        return URL.parse(urlString)
-            .then((URL url) -> HttpRequest.get(url));
+        return Result.create(() ->
+        {
+            final URL url = URL.parse(urlString).await();
+            return HttpRequest.get(url);
+        });
     }
 
     static MutableHttpRequest get(URL url)
     {
         PreCondition.assertNotNull(url, "url");
 
-        return new MutableHttpRequest().setMethod(HttpMethod.GET).setUrl(url);
+        return new MutableHttpRequest()
+            .setMethod(HttpMethod.GET)
+            .setUrl(url);
     }
 }

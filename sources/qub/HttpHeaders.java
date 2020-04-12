@@ -9,7 +9,15 @@ public interface HttpHeaders extends Iterable<HttpHeader>
      * @return Whether or not this HTTP header collection contains a header with the provided header
      * name.
      */
-    boolean contains(String headerName);
+    default boolean contains(String headerName)
+    {
+        PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
+
+        return this.get(headerName)
+            .then(() -> true)
+            .catchError(NotFoundException.class, () -> false)
+            .await();
+    }
 
     /**
      * Get the header in this collection that has the provided header name.
@@ -25,5 +33,14 @@ public interface HttpHeaders extends Iterable<HttpHeader>
      * @return The value of header in this collection with the provided headerName, if the header
      * exists in this collection.
      */
-    Result<String> getValue(String headerName);
+    default Result<String> getValue(String headerName)
+    {
+        PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
+
+        return Result.create(() ->
+        {
+            final HttpHeader header = this.get(headerName).await();
+            return header.getValue();
+        });
+    }
 }
