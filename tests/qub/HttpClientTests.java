@@ -19,7 +19,7 @@ public interface HttpClientTests
                     final HttpClient httpClient = creator.run(test);
                     final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, URL.parse("http://www.idontexistbecauseimnotagoodurl.com").await());
                     test.assertThrows(() -> httpClient.send(httpRequest).await(),
-                        new RuntimeException(new java.net.UnknownHostException("www.idontexistbecauseimnotagoodurl.com")));
+                        new HostNotFoundException("www.idontexistbecauseimnotagoodurl.com"));
                 });
 
                 runner.test("with HEAD request to www.example.com", (Test test) ->
@@ -38,8 +38,8 @@ public interface HttpClientTests
                         try (final ByteReadStream responseBody = httpResponse.getBody())
                         {
                             test.assertNotNull(responseBody);
-                            final String bodyString = responseBody.asCharacterReadStream().readEntireString().await();
-                            test.assertEqual("", bodyString);
+                            test.assertThrows(() -> CharacterReadStream.create(responseBody).readEntireString().await(),
+                                new EndOfStreamException());
                         }
                     }
                 });
@@ -58,7 +58,7 @@ public interface HttpClientTests
                         final String contentLength = httpResponse.getHeaders().getValue("content-length").await();
                         test.assertOneOf(Iterable.create("1164", "1256", "1270"), contentLength);
                         test.assertNotNull(httpResponse.getBody());
-                        final String bodyString = httpResponse.getBody().asCharacterReadStream().readEntireString().await();
+                        final String bodyString = CharacterReadStream.create(httpResponse.getBody()).readEntireString().await();
                         test.assertNotNull(bodyString);
                         test.assertStartsWith(bodyString, "<!doctype html>", CharacterComparer.CaseInsensitive);
                         test.assertContains(bodyString, "<div>");

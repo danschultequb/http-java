@@ -55,7 +55,7 @@ public interface HttpServerTests
                             test.assertEqual("HTTP/1.1", response.getHTTPVersion());
                             test.assertEqual(404, response.getStatusCode());
                             test.assertEqual("Not Found", response.getReasonPhrase());
-                            test.assertEqual("<html><body>404: Not Found</body></html>", response.getBody().asCharacterReadStream().readEntireString().await());
+                            test.assertEqual("<html><body>404: Not Found</body></html>", CharacterReadStream.create(response.getBody()).readEntireString().await());
                         }
 
                         test.assertTrue(server.dispose().await());
@@ -195,16 +195,18 @@ public interface HttpServerTests
                             test.assertEqual(200, response1.getStatusCode());
                             test.assertEqual("OK", response1.getReasonPhrase());
                             test.assertNotNull(response1.getBody());
-                            test.assertEqual("Two Fish", response1.getBody().asCharacterReadStream().readEntireString().await());
-                            test.assertEqual("", response1.getBody().asCharacterReadStream().readEntireString().await());
+                            test.assertEqual("Two Fish", CharacterReadStream.create(response1.getBody()).readEntireString().await());
+                            test.assertThrows(() -> CharacterReadStream.create(response1.getBody()).readEntireString().await(),
+                                new EndOfStreamException());
 
                             final HttpResponse response2 = client.send(HttpRequest.get("http://" + server.getLocalIPAddress() + ":" + server.getLocalPort() + "/redfish").await()).await();
                             test.assertNotNull(response2);
                             test.assertEqual(201, response2.getStatusCode());
                             test.assertEqual("Created", response2.getReasonPhrase());
                             test.assertNotNull(response2.getBody());
-                            test.assertEqual("Blue Fish", response2.getBody().asCharacterReadStream().readEntireString().await());
-                            test.assertEqual("", response2.getBody().asCharacterReadStream().readEntireString().await());
+                            test.assertEqual("Blue Fish", CharacterReadStream.create(response2.getBody()).readEntireString().await());
+                            test.assertThrows(() -> CharacterReadStream.create(response2.getBody()).readEntireString().await(),
+                                new EndOfStreamException());
                         }
                         finally
                         {
@@ -231,7 +233,7 @@ public interface HttpServerTests
                             final HttpResponse response = client.get("http://" + server.getLocalIPAddress() + ":" + server.getLocalPort() + "/things/catsanddogs").await();
                             test.assertNotNull(response);
                             test.assertEqual(200, response.getStatusCode());
-                            test.assertEqual("Hello, catsanddogs!", response.getBody().asCharacterReadStream().readEntireString().await());
+                            test.assertEqual("Hello, catsanddogs!", CharacterReadStream.create(response.getBody()).readEntireString().await());
                         }
                         finally
                         {

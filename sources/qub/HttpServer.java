@@ -18,7 +18,7 @@ public class HttpServer implements Disposable
     public HttpServer(TCPServer tcpServer, AsyncRunner asyncRunner)
     {
         PreCondition.assertNotNull(tcpServer, "tcpServer");
-        PreCondition.assertNotDisposed(tcpServer, "tcpServer.isDisposed()");
+        PreCondition.assertNotDisposed(tcpServer, "tcpServer");
         PreCondition.assertNotNull(asyncRunner, "asyncRunner");
 
         this.tcpServer = tcpServer;
@@ -147,7 +147,7 @@ public class HttpServer implements Disposable
                     try
                     {
                         final MutableHttpRequest request = new MutableHttpRequest();
-                        final CharacterReadStream acceptedClientReadStream = acceptedClient.asCharacterReadStream();
+                        final CharacterReadStream acceptedClientReadStream = CharacterReadStream.create(acceptedClient);
 
                         final String firstLine = acceptedClientReadStream.readLine().await();
                         final String[] firstLineParts = firstLine.split(" ");
@@ -224,7 +224,7 @@ public class HttpServer implements Disposable
                             reasonPhrase = HttpServer.getReasonPhrase(response.getStatusCode());
                         }
 
-                        final BufferedByteWriteStream acceptedClientBufferedWriteStream = new BufferedByteWriteStream(acceptedClient);
+                        final BufferedByteWriteStream acceptedClientBufferedWriteStream = BufferedByteWriteStream.create(acceptedClient);
                         final CharacterToByteWriteStream acceptedClientWriteStream = CharacterToByteWriteStream.create(acceptedClientBufferedWriteStream)
                             .setCharacterEncoding(CharacterEncoding.UTF_8)
                             .setNewLine("\r\n");

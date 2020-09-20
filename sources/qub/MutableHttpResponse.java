@@ -18,7 +18,7 @@ public class MutableHttpResponse implements HttpResponse
     public MutableHttpResponse()
     {
         this.headers = new MutableHttpHeaders();
-        this.body = new InMemoryByteStream().endOfStream();
+        this.body = InMemoryByteStream.create().endOfStream();
     }
 
     /**
@@ -193,7 +193,7 @@ public class MutableHttpResponse implements HttpResponse
     {
         PreCondition.assertNotNull(body, "body");
 
-        final InMemoryByteStream bodyStream = new InMemoryByteStream();
+        final InMemoryByteStream bodyStream = InMemoryByteStream.create();
         if (!Strings.isNullOrEmpty(body))
         {
             CharacterWriteStream.create(bodyStream).write(body).await();

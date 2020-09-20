@@ -53,7 +53,7 @@ public class BasicHttpClient implements HttpClient
 
             try (final TCPClient tcpClient = this.network.createTCPClient(requestIPAddress, requestPort).await())
             {
-                final BufferedByteWriteStream tcpClientBufferedWriteStream = new BufferedByteWriteStream(tcpClient);
+                final BufferedByteWriteStream tcpClientBufferedWriteStream = BufferedByteWriteStream.create(tcpClient);
                 final CharacterToByteWriteStream tcpClientWriteStream = CharacterToByteWriteStream.create(tcpClientBufferedWriteStream)
                     .setCharacterEncoding(CharacterEncoding.UTF_8)
                     .setNewLine("\r\n");
@@ -76,8 +76,8 @@ public class BasicHttpClient implements HttpClient
                 }
                 tcpClientBufferedWriteStream.flush().await();
 
-                final BufferedByteReadStream bufferedByteReadStream = new BufferedByteReadStream(tcpClient);
-                final CharacterReadStream responseCharacterReadStream = bufferedByteReadStream.asCharacterReadStream();
+                final BufferedByteReadStream bufferedByteReadStream = BufferedByteReadStream.create(tcpClient);
+                final CharacterReadStream responseCharacterReadStream = CharacterReadStream.create(bufferedByteReadStream);
                 String statusLine = responseCharacterReadStream.readLine().await();
                 final int httpVersionLength = statusLine.indexOf(' ');
 
@@ -105,7 +105,7 @@ public class BasicHttpClient implements HttpClient
                     .await();
                 if (0 < contentLength)
                 {
-                    final InMemoryByteStream responseBodyStream = new InMemoryByteStream();
+                    final InMemoryByteStream responseBodyStream = InMemoryByteStream.create();
 
                     if (request.getMethod() != HttpMethod.HEAD)
                     {

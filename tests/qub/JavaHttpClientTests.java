@@ -24,9 +24,9 @@ public class JavaHttpClientTests
                     final HttpResponse httpResponse = httpClient.send(httpRequest).await();
                     test.assertEqual("HTTP/1.1", httpResponse.getHTTPVersion());
                     test.assertEqual(200, httpResponse.getStatusCode());
-                    test.assertEqual("OK", httpResponse.getReasonPhrase());
+                    test.assertNull(httpResponse.getReasonPhrase());
                     test.assertNotNull(httpResponse.getHeaders());
-                    test.assertEqual("application/json;charset=UTF-8", httpResponse.getHeaders().getValue("content-type").await());
+                    test.assertEqual("application/json", httpResponse.getHeaders().getValue("content-type").await());
                     test.assertNotNull(httpResponse.getBody());
                     final String responseBody = CharacterEncoding.UTF_8.decodeAsString(httpResponse.getBody().readAllBytes().await()).await();
                     test.assertStartsWith(responseBody, "[");

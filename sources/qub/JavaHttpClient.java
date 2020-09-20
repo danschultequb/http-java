@@ -98,10 +98,14 @@ public class JavaHttpClient implements HttpClient
                     : urlConnection.getInputStream();
                 final ByteReadStream responseBody = javaResponseBody != null
                     ? new InputStreamToByteReadStream(javaResponseBody)
-                    : new InMemoryByteStream().endOfStream();
+                    : InMemoryByteStream.create().endOfStream();
                 response.setBody(responseBody);
 
                 result = response;
+            }
+            catch (java.net.UnknownHostException e)
+            {
+                throw new HostNotFoundException(request.getURL().getHost());
             }
             catch (java.io.IOException e)
             {
