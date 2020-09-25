@@ -30,7 +30,7 @@ public class JavaHttpClient implements HttpClient
                 final java.net.HttpURLConnection urlConnection = (java.net.HttpURLConnection)url.openConnection();
                 urlConnection.setInstanceFollowRedirects(false);
 
-                urlConnection.setRequestMethod(request.getMethod().toString());
+                urlConnection.setRequestMethod(request.getMethod());
 
                 final HttpHeaders requestHeaders = request.getHeaders();
                 if (requestHeaders != null)

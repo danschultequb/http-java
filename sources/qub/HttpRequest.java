@@ -5,11 +5,16 @@ package qub;
  */
 public interface HttpRequest
 {
+    static MutableHttpRequest create()
+    {
+        return MutableHttpRequest.create();
+    }
+
     /**
      * Get the HTTP method of this request.
      * @return The HTTP method of this request.
      */
-    HttpMethod getMethod();
+    String getMethod();
 
     /**
      * Get the version of HTTP that this request was sent with.
@@ -84,7 +89,7 @@ public interface HttpRequest
     {
         PreCondition.assertNotNull(url, "url");
 
-        return new MutableHttpRequest()
+        return HttpRequest.create()
             .setMethod(HttpMethod.GET)
             .setUrl(url);
     }

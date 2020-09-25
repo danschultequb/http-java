@@ -146,7 +146,7 @@ public class HttpServer implements Disposable
                 {
                     try
                     {
-                        final MutableHttpRequest request = new MutableHttpRequest();
+                        final MutableHttpRequest request = HttpRequest.create();
                         final CharacterReadStream acceptedClientReadStream = CharacterReadStream.create(acceptedClient);
 
                         final String firstLine = acceptedClientReadStream.readLine().await();

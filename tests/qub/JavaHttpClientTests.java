@@ -19,7 +19,9 @@ public class JavaHttpClientTests
                 {
                     final HttpClient httpClient = createHttpClient(test);
                     final URL requestURL = URL.parse("https://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill").await();
-                    final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, requestURL);
+                    final HttpRequest httpRequest = HttpRequest.create()
+                        .setMethod(HttpMethod.GET)
+                        .setUrl(requestURL);
 
                     final HttpResponse httpResponse = httpClient.send(httpRequest).await();
                     test.assertEqual("HTTP/1.1", httpResponse.getHTTPVersion());

@@ -34,6 +34,7 @@ public class BasicHttpClient implements HttpClient
     public Result<HttpResponse> send(HttpRequest request)
     {
         PreCondition.assertNotNull(request, "request");
+        PreCondition.assertNotNullAndNotEmpty(request.getMethod(), "request.getMethod()");
         PreCondition.assertNotNull(request.getURL(), "request.getURL()");
         PreCondition.assertNotNullAndNotEmpty(request.getURL().getHost(), "request.getURL().getHost()");
 
@@ -107,7 +108,7 @@ public class BasicHttpClient implements HttpClient
                 {
                     final InMemoryByteStream responseBodyStream = InMemoryByteStream.create();
 
-                    if (request.getMethod() != HttpMethod.HEAD)
+                    if (!HttpMethod.HEAD.toString().equalsIgnoreCase(request.getMethod()))
                     {
                         long bytesToRead = contentLength;
                         while (0 < bytesToRead)

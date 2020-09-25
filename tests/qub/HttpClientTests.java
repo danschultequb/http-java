@@ -6,7 +6,7 @@ public interface HttpClientTests
     {
         runner.testGroup(HttpClient.class, () ->
         {
-            runner.testGroup("send(MutableHttpRequest)", () ->
+            runner.testGroup("send(HttpRequest)", () ->
             {
                 runner.test("with null", (Test test) ->
                 {
@@ -17,7 +17,9 @@ public interface HttpClientTests
                 runner.test("with unknown host", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
-                    final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, URL.parse("http://www.idontexistbecauseimnotagoodurl.com").await());
+                    final HttpRequest httpRequest = HttpRequest.create()
+                        .setMethod(HttpMethod.GET)
+                        .setUrl("http://www.idontexistbecauseimnotagoodurl.com").await();
                     test.assertThrows(() -> httpClient.send(httpRequest).await(),
                         new HostNotFoundException("www.idontexistbecauseimnotagoodurl.com"));
                 });
@@ -25,7 +27,9 @@ public interface HttpClientTests
                 runner.test("with HEAD request to www.example.com", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
-                    final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.HEAD, URL.parse("http://www.example.com").await());
+                    final HttpRequest httpRequest = HttpRequest.create()
+                        .setMethod(HttpMethod.HEAD)
+                        .setUrl("http://www.example.com").await();
 
                     try (final HttpResponse httpResponse = httpClient.send(httpRequest).await())
                     {
@@ -47,7 +51,9 @@ public interface HttpClientTests
                 runner.test("with GET request to www.example.com", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
-                    final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, URL.parse("http://www.example.com").await());
+                    final HttpRequest httpRequest = HttpRequest.create()
+                        .setMethod(HttpMethod.GET)
+                        .setUrl("http://www.example.com").await();
 
                     try (final HttpResponse httpResponse = httpClient.send(httpRequest).await())
                     {
@@ -70,7 +76,9 @@ public interface HttpClientTests
                 runner.test("with GET request to http://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill", (Test test) ->
                 {
                     final HttpClient httpClient = creator.run(test);
-                    final MutableHttpRequest httpRequest = new MutableHttpRequest(HttpMethod.GET, URL.parse("http://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill").await());
+                    final HttpRequest httpRequest = HttpRequest.create()
+                        .setMethod(HttpMethod.GET)
+                        .setUrl("http://www.treasurydirect.gov/TA_WS/securities/auctioned?format=json&type=Bill").await();
 
                     final HttpResponse httpResponse = httpClient.send(httpRequest).await();
                     test.assertTrue(httpResponse.getHTTPVersion().equals("HTTP/1.0") || httpResponse.getHTTPVersion().equals("HTTP/1.1"));

@@ -5,7 +5,7 @@ package qub;
  */
 public class MutableHttpRequest implements HttpRequest
 {
-    private HttpMethod method;
+    private String method;
     private URL url;
     private String httpVersion;
     private final MutableHttpHeaders headers;
@@ -14,7 +14,7 @@ public class MutableHttpRequest implements HttpRequest
     /**
      * Create a new mutable HTTP request object.
      */
-    public MutableHttpRequest()
+    private MutableHttpRequest()
     {
         this.headers = new MutableHttpHeaders();
         this.httpVersion = "HTTP/1.1";
@@ -22,21 +22,14 @@ public class MutableHttpRequest implements HttpRequest
 
     /**
      * Create a new mutable HTTP request object.
-     * @param method The HTTP method that will be used with this request.
-     * @param url The URL where this HTTP request will be sent to.
      */
-    public MutableHttpRequest(HttpMethod method, URL url)
+    public static MutableHttpRequest create()
     {
-        PreCondition.assertNotNull(method, "method");
-        PreCondition.assertNotNull(url, "url");
-
-        this.method = method;
-        this.url = url;
-        this.headers = new MutableHttpHeaders();
+        return new MutableHttpRequest();
     }
 
     @Override
-    public HttpMethod getMethod()
+    public String getMethod()
     {
         return this.method;
     }
@@ -44,6 +37,13 @@ public class MutableHttpRequest implements HttpRequest
     public MutableHttpRequest setMethod(HttpMethod method)
     {
         PreCondition.assertNotNull(method, "method");
+
+        return this.setMethod(method.toString());
+    }
+
+    public MutableHttpRequest setMethod(String method)
+    {
+        PreCondition.assertNotNullAndNotEmpty(method, "method");
 
         this.method = method;
 
@@ -56,17 +56,22 @@ public class MutableHttpRequest implements HttpRequest
         return this.url;
     }
 
-    public Result<Void> setUrl(String urlString)
+    public Result<MutableHttpRequest> setUrl(String urlString)
     {
         PreCondition.assertNotNullAndNotEmpty(urlString, "urlString");
 
-        return URL.parse(urlString)
-            .then((Action1<URL>)this::setUrl);
+        return Result.create(() ->
+        {
+            final URL url = URL.parse(urlString).await();
+            return this.setUrl(url);
+        });
     }
 
     public MutableHttpRequest setUrl(URL url)
     {
         PreCondition.assertNotNull(url, "url");
+        PreCondition.assertNotNullAndNotEmpty(url.getScheme(), "url.getScheme()");
+        PreCondition.assertNotNullAndNotEmpty(url.getHost(), "url.getHost()");
 
         this.url = url;
 
@@ -79,11 +84,13 @@ public class MutableHttpRequest implements HttpRequest
         return this.httpVersion;
     }
 
-    public void setHttpVersion(String httpVersion)
+    public MutableHttpRequest setHttpVersion(String httpVersion)
     {
         PreCondition.assertNotNullAndNotEmpty(httpVersion, "httpVersion");
 
         this.httpVersion = httpVersion;
+
+        return this;
     }
 
     @Override
@@ -147,11 +154,14 @@ public class MutableHttpRequest implements HttpRequest
         return this;
     }
 
-    public Result<Void> setBody(String bodyText)
+    public Result<MutableHttpRequest> setBody(String bodyText)
     {
-        PreCondition.assertNotNullAndNotEmpty(bodyText, "bodyText");
-
-        return CharacterEncoding.UTF_8.encodeCharacters(bodyText)
-            .then((Action1<byte[]>)this::setBody);
+        return Result.create(() ->
+        {
+            final byte[] bodyBytes = Strings.isNullOrEmpty(bodyText)
+                ? null
+                : CharacterEncoding.UTF_8.encodeCharacters(bodyText).await();
+            return this.setBody(bodyBytes);
+        });
     }
 }
