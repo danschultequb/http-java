@@ -10,22 +10,14 @@ public class MutableHttpHeaders implements HttpHeaders
     /**
      * Create a new empty MutableHttpHeaders collection.
      */
-    public MutableHttpHeaders()
+    private MutableHttpHeaders()
     {
         this.headerMap = Map.create();
     }
 
-    public MutableHttpHeaders(Iterable<HttpHeader> headers)
+    public static MutableHttpHeaders create()
     {
-        this();
-
-        if (headers != null && headers.any())
-        {
-            for (final HttpHeader header : headers)
-            {
-                this.set(header);
-            }
-        }
+        return new MutableHttpHeaders();
     }
 
     private static String getHeaderKey(String headerName)

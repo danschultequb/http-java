@@ -13,7 +13,7 @@ public interface MutableHttpRequestTests
                 test.assertNull(request.getMethod());
                 test.assertEqual("HTTP/1.1", request.getHttpVersion());
                 test.assertNull(request.getURL());
-                test.assertEqual(new MutableHttpHeaders(), request.getHeaders());
+                test.assertEqual(HttpHeaders.create(), request.getHeaders());
                 test.assertNull(request.getBody());
             });
 
@@ -142,7 +142,7 @@ public interface MutableHttpRequestTests
                     {
                         final MutableHttpRequest request = MutableHttpRequest.create();
                         test.assertThrows(() -> request.setHeader(headerName, headerValue), expected);
-                        test.assertEqual(new MutableHttpHeaders(), request.getHeaders());
+                        test.assertEqual(HttpHeaders.create(), request.getHeaders());
                     });
                 };
 
@@ -157,7 +157,9 @@ public interface MutableHttpRequestTests
                         final MutableHttpRequest request = MutableHttpRequest.create();
                         final MutableHttpRequest setHeaderResult = request.setHeader(headerName, headerValue);
                         test.assertSame(request, setHeaderResult);
-                        test.assertEqual(new MutableHttpHeaders().set(headerName, headerValue), request.getHeaders());
+                        test.assertEqual(HttpHeaders.create().set(headerName, headerValue), request.getHeaders());
+                        test.assertEqual(new HttpHeader(headerName, headerValue), request.getHeader(headerName).await());
+                        test.assertEqual(headerValue, request.getHeaderValue(headerName).await());
                     });
                 };
 
@@ -174,7 +176,7 @@ public interface MutableHttpRequestTests
                         final MutableHttpRequest request = MutableHttpRequest.create();
                         final MutableHttpRequest setHeaderResult = request.setHeader(headerName, headerValue);
                         test.assertSame(request, setHeaderResult);
-                        test.assertEqual(new MutableHttpHeaders().set(headerName, headerValue), request.getHeaders());
+                        test.assertEqual(HttpHeaders.create().set(headerName, headerValue), request.getHeaders());
                     });
                 };
 
@@ -192,7 +194,7 @@ public interface MutableHttpRequestTests
                         final MutableHttpRequest request = MutableHttpRequest.create();
                         final MutableHttpRequest setHeaderResult = request.setHeader(headerName, headerValue);
                         test.assertSame(request, setHeaderResult);
-                        test.assertEqual(new MutableHttpHeaders().set(headerName, headerValue), request.getHeaders());
+                        test.assertEqual(HttpHeaders.create().set(headerName, headerValue), request.getHeaders());
                     });
                 };
 
@@ -210,7 +212,7 @@ public interface MutableHttpRequestTests
                         final MutableHttpRequest request = MutableHttpRequest.create();
                         test.assertThrows(() -> request.setBody(contentLength, body), expected);
                         test.assertNull(request.getBody());
-                        test.assertEqual(new MutableHttpHeaders(), request.getHeaders());
+                        test.assertEqual(HttpHeaders.create(), request.getHeaders());
                     });
                 };
 
@@ -224,7 +226,7 @@ public interface MutableHttpRequestTests
                     final MutableHttpRequest setBodyResult = request.setBody(0, null);
                     test.assertSame(request, setBodyResult);
                     test.assertNull(request.getBody());
-                    test.assertEqual(new MutableHttpHeaders(), request.getHeaders());
+                    test.assertEqual(HttpHeaders.create(), request.getHeaders());
                 });
 
                 runner.test("with 3 contentLength and non-null body", (Test test) ->
@@ -246,7 +248,7 @@ public interface MutableHttpRequestTests
                     final MutableHttpRequest setBodyResult = request.setBody((byte[])null);
                     test.assertSame(request, setBodyResult);
                     test.assertNull(request.getBody());
-                    test.assertEqual(new MutableHttpHeaders(), request.getHeaders());
+                    test.assertEqual(HttpHeaders.create(), request.getHeaders());
                 });
 
                 runner.test("with empty", (Test test) ->
@@ -255,7 +257,7 @@ public interface MutableHttpRequestTests
                     final MutableHttpRequest setBodyResult = request.setBody(new byte[0]);
                     test.assertSame(request, setBodyResult);
                     test.assertNull(request.getBody());
-                    test.assertEqual(new MutableHttpHeaders(), request.getHeaders());
+                    test.assertEqual(HttpHeaders.create(), request.getHeaders());
                 });
 
                 runner.test("with non-empty", (Test test) ->
@@ -265,8 +267,9 @@ public interface MutableHttpRequestTests
                     test.assertSame(request, setBodyResult);
                     test.assertEqual(new byte[] { 0, 1, 2, 3, 4 }, request.getBody().readAllBytes().await());
                     test.assertEqual(
-                        new MutableHttpHeaders().set(HttpHeader.ContentLengthName, 5),
+                        HttpHeaders.create().set(HttpHeader.ContentLengthName, 5),
                         request.getHeaders());
+                    test.assertEqual(5, request.getContentLength().await());
                 });
             });
 
@@ -299,6 +302,7 @@ public interface MutableHttpRequestTests
                     test.assertEqual(
                         Iterable.create(new HttpHeader("Content-Length", 5)),
                         request.getHeaders());
+                    test.assertEqual(5, request.getContentLength().await());
                 });
             });
         });

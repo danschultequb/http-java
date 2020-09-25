@@ -17,7 +17,7 @@ public class MutableHttpResponse implements HttpResponse
      */
     public MutableHttpResponse()
     {
-        this.headers = new MutableHttpHeaders();
+        this.headers = HttpHeaders.create();
         this.body = InMemoryByteStream.create().endOfStream();
     }
 

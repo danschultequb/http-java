@@ -2,6 +2,11 @@ package qub;
 
 public interface HttpHeaders extends Iterable<HttpHeader>
 {
+    static MutableHttpHeaders create()
+    {
+        return MutableHttpHeaders.create();
+    }
+
     /**
      * Get whether or not this HTTP header collection contains a header with the provided header
      * name.

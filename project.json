@@ -1,7 +1,7 @@
 {
   "publisher": "qub",
   "project": "http-java",
-  "version": "12",
+  "version": "13",
   "java": {
     "dependencies": [
       {
