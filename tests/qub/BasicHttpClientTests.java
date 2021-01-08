@@ -6,9 +6,9 @@ public class BasicHttpClientTests
     {
         runner.testGroup(BasicHttpClient.class, () ->
         {
-            HttpClientTests.test(runner, (Test test) ->
+            HttpClientTests.test(runner, (Network network) ->
             {
-                return BasicHttpClient.create(test.getNetwork());
+                return BasicHttpClient.create(network);
             });
         });
     }

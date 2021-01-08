@@ -40,9 +40,10 @@ public class BasicHttpClient implements HttpClient
 
         return Result.create(() ->
         {
-            final URL requestUrl = request.getURL();
+            final MutableURL requestUrl = request.getURL().clone();
             final String requestHost = requestUrl.getHost();
             final IPv4Address requestIPAddress = this.dns.resolveHost(requestHost).await();
+            requestUrl.setHost(requestIPAddress.toString());
 
             Integer requestPort = requestUrl.getPort();
             if (requestPort == null)
@@ -50,7 +51,7 @@ public class BasicHttpClient implements HttpClient
                 requestPort = 80;
             }
 
-            final MutableHttpResponse result = new MutableHttpResponse();
+            final MutableHttpResponse result = HttpResponse.create();
 
             try (final TCPClient tcpClient = this.network.createTCPClient(requestIPAddress, requestPort).await())
             {
@@ -58,12 +59,7 @@ public class BasicHttpClient implements HttpClient
                 final CharacterToByteWriteStream tcpClientWriteStream = CharacterToByteWriteStream.create(tcpClientBufferedWriteStream)
                     .setCharacterEncoding(CharacterEncoding.UTF_8)
                     .setNewLine("\r\n");
-                String httpVersion = request.getHttpVersion();
-                if (Strings.isNullOrEmpty(httpVersion))
-                {
-                    httpVersion = "HTTP/1.1";
-                }
-                tcpClientWriteStream.writeLine("%s %s %s", request.getMethod(), request.getURL(), httpVersion).await();
+                tcpClientWriteStream.writeLine("%s %s %s", request.getMethod(), requestUrl, request.getHttpVersion()).await();
                 for (final HttpHeader header : request.getHeaders())
                 {
                     tcpClientWriteStream.writeLine("%s:%s", header.getName(), header.getValue()).await();
@@ -82,7 +78,7 @@ public class BasicHttpClient implements HttpClient
                 String statusLine = responseCharacterReadStream.readLine().await();
                 final int httpVersionLength = statusLine.indexOf(' ');
 
-                result.setHTTPVersion(statusLine.substring(0, httpVersionLength));
+                result.setHttpVersion(statusLine.substring(0, httpVersionLength));
                 statusLine = statusLine.substring(httpVersionLength + 1);
 
                 final int statusCodeStringLength = statusLine.indexOf(' ');
@@ -108,21 +104,20 @@ public class BasicHttpClient implements HttpClient
                 {
                     final InMemoryByteStream responseBodyStream = InMemoryByteStream.create();
 
-                    if (!HttpMethod.HEAD.toString().equalsIgnoreCase(request.getMethod()))
+                    long bytesToRead = contentLength;
+                    while (0 < bytesToRead)
                     {
-                        long bytesToRead = contentLength;
-                        while (0 < bytesToRead)
+                        final byte[] bytesRead = bufferedByteReadStream.readBytes((int)Math.minimum(bytesToRead, Integers.maximum))
+                            .catchError(EndOfStreamException.class)
+                            .await();
+                        if (bytesRead == null)
                         {
-                            final byte[] bytesRead = bufferedByteReadStream.readBytes((int)Math.minimum(bytesToRead, Integers.maximum)).await();
-                            if (bytesRead == null)
-                            {
-                                bytesToRead = 0;
-                            }
-                            else
-                            {
-                                responseBodyStream.writeAll(bytesRead).await();
-                                bytesToRead -= bytesRead.length;
-                            }
+                            bytesToRead = 0;
+                        }
+                        else
+                        {
+                            responseBodyStream.writeAll(bytesRead).await();
+                            bytesToRead -= bytesRead.length;
                         }
                     }
                     responseBodyStream.endOfStream();

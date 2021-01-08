@@ -72,35 +72,33 @@ public interface MutableHttpRequestTests
                 setMethodTest.run("apples");
             });
 
-            runner.testGroup("setUrl(String)", () ->
+            runner.testGroup("setUrl(URL)", () ->
             {
-                final Action2<String,Throwable> setUrlErrorTest = (String url, Throwable expected) ->
+                final Action2<URL,Throwable> setUrlErrorTest = (URL url, Throwable expected) ->
                 {
                     runner.test("with " + Strings.escapeAndQuote(url), (Test test) ->
                     {
                         final MutableHttpRequest request = MutableHttpRequest.create();
-                        test.assertThrows(() -> request.setUrl(url).await(), expected);
+                        test.assertThrows(() -> request.setUrl(url), expected);
                         test.assertNull(request.getURL());
                     });
                 };
 
-                setUrlErrorTest.run(null, new PreConditionFailure("urlString cannot be null."));
-                setUrlErrorTest.run("", new PreConditionFailure("urlString cannot be empty."));
-                setUrlErrorTest.run("I'm not a valid url", new IllegalArgumentException("A URL must begin with either a scheme (such as \"http\") or a host (such as \"www.example.com\"), not \"'\"."));
-                setUrlErrorTest.run("www.google.com", new PreConditionFailure("url.getScheme() cannot be null."));
+                setUrlErrorTest.run(null, new PreConditionFailure("url cannot be null."));
+                setUrlErrorTest.run(URL.parse("www.google.com").await(), new PreConditionFailure("url.getScheme() cannot be null."));
 
-                final Action1<String> setUrlTest = (String url) ->
+                final Action1<URL> setUrlTest = (URL url) ->
                 {
                     runner.test("with " + Strings.escapeAndQuote(url), (Test test) ->
                     {
                         final MutableHttpRequest request = MutableHttpRequest.create();
-                        final MutableHttpRequest setUrlResult = request.setUrl(url).await();
+                        final MutableHttpRequest setUrlResult = request.setUrl(url);
                         test.assertSame(request, setUrlResult);
-                        test.assertEqual(url, request.getURL().toString());
+                        test.assertEqual(url, request.getURL());
                     });
                 };
 
-                setUrlTest.run("http://www.google.com");
+                setUrlTest.run(URL.parse("http://www.google.com").await());
             });
 
             runner.testGroup("setHttpVersion(String)", () ->
@@ -158,7 +156,7 @@ public interface MutableHttpRequestTests
                         final MutableHttpRequest setHeaderResult = request.setHeader(headerName, headerValue);
                         test.assertSame(request, setHeaderResult);
                         test.assertEqual(HttpHeaders.create().set(headerName, headerValue), request.getHeaders());
-                        test.assertEqual(new HttpHeader(headerName, headerValue), request.getHeader(headerName).await());
+                        test.assertEqual(HttpHeader.create(headerName, headerValue), request.getHeader(headerName).await());
                         test.assertEqual(headerValue, request.getHeaderValue(headerName).await());
                     });
                 };
@@ -235,7 +233,7 @@ public interface MutableHttpRequestTests
                     request.setBody(3, new InMemoryByteStream(new byte[] { 0, 1, 2 }));
                     test.assertNotNull(request.getBody());
                     test.assertEqual(
-                        Iterable.create(new HttpHeader("Content-Length", 3)),
+                        Iterable.create(HttpHeader.create("Content-Length", 3)),
                         request.getHeaders());
                 });
             });
@@ -300,7 +298,7 @@ public interface MutableHttpRequestTests
                     test.assertSame(request, setBodyResult);
                     test.assertEqual("hello", CharacterReadStream.create(request.getBody()).readLine().await());
                     test.assertEqual(
-                        Iterable.create(new HttpHeader("Content-Length", 5)),
+                        Iterable.create(HttpHeader.create("Content-Length", 5)),
                         request.getHeaders());
                     test.assertEqual(5, request.getContentLength().await());
                 });

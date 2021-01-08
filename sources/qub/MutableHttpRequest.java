@@ -22,17 +22,6 @@ public interface MutableHttpRequest extends HttpRequest
 
     MutableHttpRequest setMethod(String method);
 
-    default Result<? extends MutableHttpRequest> setUrl(String urlString)
-    {
-        PreCondition.assertNotNullAndNotEmpty(urlString, "urlString");
-
-        return Result.create(() ->
-        {
-            final URL url = URL.parse(urlString).await();
-            return this.setUrl(url);
-        });
-    }
-
     MutableHttpRequest setUrl(URL url);
 
     MutableHttpRequest setHttpVersion(String httpVersion);
@@ -43,12 +32,14 @@ public interface MutableHttpRequest extends HttpRequest
 
     MutableHttpRequest setHeader(String headerName, long headerValue);
 
+    MutableHttpRequest setHeaders(Iterable<HttpHeader> headers);
+
     MutableHttpRequest setBody(long contentLength, ByteReadStream body);
 
     default MutableHttpRequest setBody(byte[] bodyBytes)
     {
         final int contentLength = bodyBytes == null ? 0 : bodyBytes.length;
-        return this.setBody(contentLength, contentLength == 0 ? null : new InMemoryByteStream(bodyBytes).endOfStream());
+        return this.setBody(contentLength, contentLength == 0 ? null : InMemoryByteStream.create(bodyBytes).endOfStream());
     }
 
     default Result<? extends MutableHttpRequest> setBody(String bodyText)

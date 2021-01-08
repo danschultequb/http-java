@@ -28,15 +28,31 @@ public interface HttpClient
     {
         PreCondition.assertNotNullAndNotEmpty(urlString, "urlString");
 
+        return this.get(urlString, HttpHeaders.create());
+    }
+
+    default Result<HttpResponse> get(String urlString, HttpHeaders headers)
+    {
+        PreCondition.assertNotNullAndNotEmpty(urlString, "urlString");
+        PreCondition.assertNotNull(headers, "headers");
+
         return Result.create(() ->
         {
             final URL url = URL.parse(urlString).await();
-            return this.get(url).await();
+            return this.get(url, headers).await();
         });
     }
 
     default Result<HttpResponse> get(URL url)
     {
-        return this.send(HttpRequest.get(url));
+        return this.get(url, HttpHeaders.create());
+    }
+
+    default Result<HttpResponse> get(URL url, HttpHeaders headers)
+    {
+        PreCondition.assertNotNull(url, "url");
+        PreCondition.assertNotNull(headers, "headers");
+
+        return this.send(HttpRequest.get(url).setHeaders(headers));
     }
 }

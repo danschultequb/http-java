@@ -46,7 +46,7 @@ public interface MutableHttpHeadersTests
                 runner.test("with non-null header", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    final MutableHttpHeaders setResult = headers.set(new HttpHeader("header-name", "header-value"));
+                    final MutableHttpHeaders setResult = headers.set(HttpHeader.create("header-name", "header-value"));
                     test.assertSame(headers, setResult);
                     test.assertEqual("header-value", headers.get("header-name").await().getValue());
                 });
@@ -81,7 +81,7 @@ public interface MutableHttpHeadersTests
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
                     final MutableHttpHeaders setResult = headers.set("header-name", "");
                     test.assertSame(headers, setResult);
-                    test.assertEqual(new HttpHeader("header-name", ""), headers.get("header-name").await());
+                    test.assertEqual(HttpHeader.create("header-name", ""), headers.get("header-name").await());
                 });
 
                 runner.test("with non-existing header", (Test test) ->
@@ -225,14 +225,14 @@ public interface MutableHttpHeadersTests
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
                     headers.set("header-name", "header-value");
-                    test.assertEqual(new HttpHeader("header-name", "header-value"), headers.get("header-name").await());
+                    test.assertEqual(HttpHeader.create("header-name", "header-value"), headers.get("header-name").await());
                 });
 
                 runner.test("with different case of existing header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
                     headers.set("header-name", "header-value");
-                    test.assertEqual(new HttpHeader("header-name", "header-value"), headers.get("HEADER-NAME").await());
+                    test.assertEqual(HttpHeader.create("header-name", "header-value"), headers.get("HEADER-NAME").await());
                 });
             });
 
@@ -295,7 +295,7 @@ public interface MutableHttpHeadersTests
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
                     headers.set("A", "B");
-                    test.assertEqual(new HttpHeader("A", "B"), headers.remove("A").await());
+                    test.assertEqual(HttpHeader.create("A", "B"), headers.remove("A").await());
                     test.assertThrows(() -> headers.remove("A").await(), new NotFoundException("A"));
                 });
             });

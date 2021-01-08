@@ -13,14 +13,13 @@ public class HttpHeader
     private final String name;
     private final String value;
 
-    /**
-     * Create a new HTTP header with the provided name and value.
-     * @param name The name of the HTTP header.
-     * @param value The value of the HTTP header.
-     */
-    public HttpHeader(String name, int value)
+    private HttpHeader(String name, String value)
     {
-        this(name, Integers.toString(value));
+        PreCondition.assertNotNullAndNotEmpty(name, "name");
+        PreCondition.assertNotNull(value, "value");
+
+        this.name = name;
+        this.value = value;
     }
 
     /**
@@ -28,13 +27,19 @@ public class HttpHeader
      * @param name The name of the HTTP header.
      * @param value The value of the HTTP header.
      */
-    public HttpHeader(String name, String value)
+    public static HttpHeader create(String name, int value)
     {
-        PreCondition.assertNotNullAndNotEmpty(name, "name");
-        PreCondition.assertNotNull(value, "value");
+        return HttpHeader.create(name, Integers.toString(value));
+    }
 
-        this.name = name;
-        this.value = value;
+    /**
+     * Create a new HTTP header with the provided name and value.
+     * @param name The name of the HTTP header.
+     * @param value The value of the HTTP header.
+     */
+    public static HttpHeader create(String name, String value)
+    {
+        return new HttpHeader(name, value);
     }
 
     /**

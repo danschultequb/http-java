@@ -79,7 +79,19 @@ public class MutableHttpHeaders implements HttpHeaders
         PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
         PreCondition.assertNotNull(headerValue, "headerValue");
 
-        this.headerMap.set(MutableHttpHeaders.getHeaderKey(headerName), new HttpHeader(headerName, headerValue));
+        this.headerMap.set(MutableHttpHeaders.getHeaderKey(headerName), HttpHeader.create(headerName, headerValue));
+        return this;
+    }
+
+    public MutableHttpHeaders setAll(Iterable<HttpHeader> headers)
+    {
+        PreCondition.assertNotNull(headers, "headers");
+
+        for (final HttpHeader header : headers)
+        {
+            this.set(header);
+        }
+
         return this;
     }
 

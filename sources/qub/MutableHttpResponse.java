@@ -15,17 +15,22 @@ public class MutableHttpResponse implements HttpResponse
     /**
      * Create a new MutableHttpResponse object.
      */
-    public MutableHttpResponse()
+    private MutableHttpResponse()
     {
         this.headers = HttpHeaders.create();
         this.body = InMemoryByteStream.create().endOfStream();
+    }
+
+    public static MutableHttpResponse create()
+    {
+        return new MutableHttpResponse();
     }
 
     /**
      * Set the HTTP version that this response was sent with.
      * @param httpVersion The HTTP version that this response was sent with.
      */
-    public MutableHttpResponse setHTTPVersion(String httpVersion)
+    public MutableHttpResponse setHttpVersion(String httpVersion)
     {
         PreCondition.assertNotNullAndNotEmpty(httpVersion, "httpVersion");
 
@@ -35,7 +40,7 @@ public class MutableHttpResponse implements HttpResponse
     }
 
     @Override
-    public String getHTTPVersion()
+    public String getHttpVersion()
     {
         return httpVersion;
     }
@@ -81,7 +86,7 @@ public class MutableHttpResponse implements HttpResponse
      * Set the headers in this response to be the provided headers.
      * @param headers The new set of headers for this response.
      */
-    public MutableHttpResponse setHeaders(HttpHeaders headers)
+    public MutableHttpResponse setHeaders(Iterable<HttpHeader> headers)
     {
         PreCondition.assertNotNull(headers, "headers");
 
@@ -193,16 +198,13 @@ public class MutableHttpResponse implements HttpResponse
     {
         PreCondition.assertNotNull(body, "body");
 
-        final InMemoryByteStream bodyStream = InMemoryByteStream.create();
+        final InMemoryCharacterToByteStream bodyStream = InMemoryCharacterToByteStream.create();
         if (!Strings.isNullOrEmpty(body))
         {
-            CharacterWriteStream.create(bodyStream).write(body).await();
-
-            final int bodyStreamByteCount = bodyStream.getCount();
-            this.setHeader(HttpHeader.ContentLengthName, bodyStreamByteCount);
+            bodyStream.write(body).await();
+            this.setHeader(HttpHeader.ContentLengthName, bodyStream.getBytes().length);
         }
-        bodyStream.endOfStream();
-        return this.setBody(bodyStream);
+        return this.setBody(bodyStream.endOfStream());
     }
 
     @Override
@@ -214,26 +216,15 @@ public class MutableHttpResponse implements HttpResponse
     @Override
     public Result<Boolean> dispose()
     {
-        Result<Boolean> result;
-        if (disposed)
+        return Result.create(() ->
         {
-            result = Result.successFalse();
-        }
-        else
-        {
-            disposed = true;
-            if (body == null)
+            boolean result = !this.disposed;
+            if (result)
             {
-                result = Result.successTrue();
+                this.disposed = true;
+                body.dispose().await();
             }
-            else
-            {
-                result = body.dispose();
-            }
-        }
-
-        PostCondition.assertNotNull(result, "result");
-
-        return result;
+            return result;
+        });
     }
 }

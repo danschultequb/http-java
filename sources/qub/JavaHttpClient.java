@@ -18,6 +18,7 @@ public class JavaHttpClient implements HttpClient
     public Result<HttpResponse> send(HttpRequest request)
     {
         PreCondition.assertNotNull(request, "request");
+        PreCondition.assertNotNullAndNotEmpty(request.getMethod(), "request.getMethod()");
         PreCondition.assertNotNull(request.getURL(), "request.getURL()");
         PreCondition.assertNotNullAndNotEmpty(request.getURL().getHost(), "request.getURL().getHost()");
 
@@ -33,12 +34,9 @@ public class JavaHttpClient implements HttpClient
                 urlConnection.setRequestMethod(request.getMethod());
 
                 final HttpHeaders requestHeaders = request.getHeaders();
-                if (requestHeaders != null)
+                for (final HttpHeader header : requestHeaders)
                 {
-                    for (final HttpHeader header : requestHeaders)
-                    {
-                        urlConnection.setRequestProperty(header.getName(), header.getValue());
-                    }
+                    urlConnection.setRequestProperty(header.getName(), header.getValue());
                 }
 
                 final ByteReadStream body = request.getBody();
@@ -48,14 +46,9 @@ public class JavaHttpClient implements HttpClient
                     {
                         urlConnection.setDoOutput(true);
 
-                        final ByteWriteStream writeStream = new OutputStreamToByteWriteStream(urlConnection.getOutputStream());
-                        try
+                        try (final ByteWriteStream writeStream = new OutputStreamToByteWriteStream(urlConnection.getOutputStream()))
                         {
                             writeStream.writeAll(body).await();
-                        }
-                        finally
-                        {
-                            writeStream.dispose().await();
                         }
                     }
                     finally
@@ -64,42 +57,30 @@ public class JavaHttpClient implements HttpClient
                     }
                 }
 
-                final MutableHttpResponse response = new MutableHttpResponse()
+                final MutableHttpResponse response = HttpResponse.create()
                     .setReasonPhrase(urlConnection.getResponseMessage())
                     .setStatusCode(urlConnection.getResponseCode());
 
                 final java.util.Map<String,java.util.List<String>> responseHeaders = urlConnection.getHeaderFields();
-                if (responseHeaders == null || !responseHeaders.containsKey(null))
-                {
-                    response.setHTTPVersion("HTTP/1.1");
-                }
-                else
-                {
-                    final String statusLine = responseHeaders.get(null).get(0);
-                    final int firstSpace = statusLine.indexOf(' ');
-                    response.setHTTPVersion(statusLine.substring(0, firstSpace));
-                }
 
-                if (responseHeaders != null)
+                final String statusLine = responseHeaders.get(null).get(0);
+                final int firstSpace = statusLine.indexOf(' ');
+                response.setHttpVersion(statusLine.substring(0, firstSpace));
+
+                for (final java.util.Map.Entry<String,java.util.List<String>> responseHeader : responseHeaders.entrySet())
                 {
-                    for (final java.util.Map.Entry<String,java.util.List<String>> responseHeader : responseHeaders.entrySet())
+                    final String headerName = responseHeader.getKey();
+                    if (!Strings.isNullOrEmpty(headerName))
                     {
-                        final String headerName = responseHeader.getKey();
-                        if (!Strings.isNullOrEmpty(headerName))
-                        {
-                            response.setHeader(headerName, Strings.join(',', responseHeader.getValue()));
-                        }
+                        response.setHeader(headerName, Strings.join(',', responseHeader.getValue()));
                     }
                 }
 
                 final int statusCode = response.getStatusCode();
-                final java.io.InputStream javaResponseBody = (400 <= statusCode && statusCode <= 599)
+                final java.io.InputStream javaResponseBody = 400 <= statusCode
                     ? urlConnection.getErrorStream()
                     : urlConnection.getInputStream();
-                final ByteReadStream responseBody = javaResponseBody != null
-                    ? new InputStreamToByteReadStream(javaResponseBody)
-                    : InMemoryByteStream.create().endOfStream();
-                response.setBody(responseBody);
+                response.setBody(new InputStreamToByteReadStream(javaResponseBody));
 
                 result = response;
             }

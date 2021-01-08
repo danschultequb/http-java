@@ -57,13 +57,6 @@ public class BasicMutableHttpRequest implements MutableHttpRequest
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Result<BasicMutableHttpRequest> setUrl(String urlString)
-    {
-        return (Result<BasicMutableHttpRequest>)MutableHttpRequest.super.setUrl(urlString);
-    }
-
-    @Override
     public BasicMutableHttpRequest setUrl(URL url)
     {
         PreCondition.assertNotNull(url, "url");
@@ -117,6 +110,16 @@ public class BasicMutableHttpRequest implements MutableHttpRequest
     public BasicMutableHttpRequest setHeader(String headerName, long headerValue)
     {
         this.headers.set(headerName, headerValue);
+
+        return this;
+    }
+
+    @Override
+    public BasicMutableHttpRequest setHeaders(Iterable<HttpHeader> headers)
+    {
+        PreCondition.assertNotNull(headers, "headers");
+
+        this.headers.setAll(headers);
 
         return this;
     }

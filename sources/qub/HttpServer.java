@@ -15,7 +15,7 @@ public class HttpServer implements Disposable
      * Create a new HTTP server based on the provided TCPServer.
      * @param tcpServer The TCPServer that will accept incoming HTTP requests.
      */
-    public HttpServer(TCPServer tcpServer, AsyncRunner asyncRunner)
+    private HttpServer(TCPServer tcpServer, AsyncRunner asyncRunner)
     {
         PreCondition.assertNotNull(tcpServer, "tcpServer");
         PreCondition.assertNotDisposed(tcpServer, "tcpServer");
@@ -26,12 +26,23 @@ public class HttpServer implements Disposable
         this.paths = Map.create();
         this.notFoundAction = (HttpRequest request) ->
         {
-            return new MutableHttpResponse()
-                .setHTTPVersion(request.getHttpVersion())
-                .setStatusCode(404)
-                .setReasonPhrase("Not Found")
-                .setBody("<html><body>404: Not Found</body></html>");
+            final int responseStatusCode = 404;
+            final String reasonPhrase = HttpServer.getReasonPhrase(responseStatusCode);
+            return HttpResponse.create()
+                .setHttpVersion(request.getHttpVersion())
+                .setStatusCode(responseStatusCode)
+                .setReasonPhrase(reasonPhrase)
+                .setBody(responseStatusCode + ": " + reasonPhrase);
         };
+    }
+
+    /**
+     * Create a new HTTP server based on the provided TCPServer.
+     * @param tcpServer The TCPServer that will accept incoming HTTP requests.
+     */
+    public static HttpServer create(TCPServer tcpServer, AsyncRunner asyncRunner)
+    {
+        return new HttpServer(tcpServer, asyncRunner);
     }
 
     /**
@@ -61,12 +72,12 @@ public class HttpServer implements Disposable
      * @param pathString The pathString that this HTTP server will respond to.
      * @return The result of adding the provided path.
      */
-    public Result<Void> addPath(String pathString, Function1<HttpRequest,HttpResponse> pathAction)
+    public HttpServer setPath(String pathString, Function1<HttpRequest,HttpResponse> pathAction)
     {
         PreCondition.assertNotNullAndNotEmpty(pathString, "pathString");
         PreCondition.assertNotNull(pathAction, "pathAction");
 
-        return this.addPath(pathString, (Indexable<String> pathMatches, HttpRequest request) -> pathAction.run(request));
+        return this.setPath(pathString, (Indexable<String> pathMatches, HttpRequest request) -> pathAction.run(request));
     }
 
     /**
@@ -74,39 +85,33 @@ public class HttpServer implements Disposable
      * @param pathString The pathString that this HTTP server will respond to.
      * @return The result of adding the provided path.
      */
-    public Result<Void> addPath(String pathString, Function2<Indexable<String>,HttpRequest,HttpResponse> pathAction)
+    public HttpServer setPath(String pathString, Function2<Indexable<String>,HttpRequest,HttpResponse> pathAction)
     {
         PreCondition.assertNotNullAndNotEmpty(pathString, "pathString");
         PreCondition.assertNotNull(pathAction, "pathAction");
 
-        return Result.create(() ->
+        String normalizedPathString = pathString;
+        if (normalizedPathString.contains("\\"))
         {
-            String normalizedPathString = pathString;
-            if (normalizedPathString.contains("\\"))
-            {
-                normalizedPathString = normalizedPathString.replaceAll("\\\\", "/");
-            }
-            if (!normalizedPathString.startsWith("/"))
-            {
-                normalizedPathString = '/' + normalizedPathString;
-            }
+            normalizedPathString = normalizedPathString.replaceAll("\\\\", "/");
+        }
+        if (!normalizedPathString.startsWith("/"))
+        {
+            normalizedPathString = '/' + normalizedPathString;
+        }
 
-            int endIndex = normalizedPathString.length();
-            while (1 < endIndex && normalizedPathString.charAt(endIndex - 1) == '/')
-            {
-                --endIndex;
-            }
-            normalizedPathString = normalizedPathString.substring(0, endIndex);
+        int endIndex = normalizedPathString.length();
+        while (1 < endIndex && normalizedPathString.charAt(endIndex - 1) == '/')
+        {
+            --endIndex;
+        }
+        normalizedPathString = normalizedPathString.substring(0, endIndex);
 
-            final PathPattern pathPattern = PathPattern.parse(normalizedPathString);
+        final PathPattern pathPattern = PathPattern.parse(normalizedPathString);
 
-            if (paths.containsKey(pathPattern))
-            {
-                throw new AlreadyExistsException("The path " + Strings.escapeAndQuote(pathPattern) + " already exists.");
-            }
+        this.paths.set(pathPattern, pathAction);
 
-            this.paths.set(pathPattern, pathAction);
-        });
+        return this;
     }
 
     /**
@@ -115,11 +120,13 @@ public class HttpServer implements Disposable
      * @param notFoundAction The action that will be invoked when this HttpServer receives a request
      *                       for a path that isn't recognized.
      */
-    public void setNotFound(Function1<HttpRequest,HttpResponse> notFoundAction)
+    public HttpServer setNotFound(Function1<HttpRequest,HttpResponse> notFoundAction)
     {
         PreCondition.assertNotNull(notFoundAction, "notFoundAction");
 
         this.notFoundAction = notFoundAction;
+
+        return this;
     }
 
     /**
@@ -152,7 +159,20 @@ public class HttpServer implements Disposable
                         final String firstLine = acceptedClientReadStream.readLine().await();
                         final String[] firstLineParts = firstLine.split(" ");
                         request.setMethod(HttpMethod.valueOf(firstLineParts[0]));
-                        request.setUrl(URL.parse(firstLineParts[1]).await());
+                        request.setUrl(URL.parse(firstLineParts[1])
+                            .catchError(() ->
+                            {
+                                final MutableURL url = MutableURL.create()
+                                    .setScheme("https")
+                                    .setHost(this.tcpServer.getLocalIPAddress().toString())
+                                    .setPath(firstLineParts[1]);
+                                final int port = this.tcpServer.getLocalPort();
+                                if (port != 80)
+                                {
+                                    url.setPort(port);
+                                }
+                                return url;
+                            }).await());
                         request.setHttpVersion(firstLineParts[2]);
 
                         String headerLine = acceptedClientReadStream.readLine().await();
@@ -160,18 +180,18 @@ public class HttpServer implements Disposable
                         {
                             final int firstColonIndex = headerLine.indexOf(':');
                             final String headerName = headerLine.substring(0, firstColonIndex);
-                            final String headerValue = headerLine.substring(firstColonIndex + 1);
+                            final String headerValue = headerLine.substring(firstColonIndex + 1).trim();
                             request.setHeader(headerName, headerValue);
 
                             headerLine = acceptedClientReadStream.readLine().await();
                         }
 
                         final Long requestContentLength = request.getContentLength()
-                            .catchError(NotFoundException.class)
+                            .catchError(NotFoundException.class, () -> 0L)
                             .await();
-                        if (requestContentLength != null)
+                        if (requestContentLength > 0)
                         {
-                            request.setBody(requestContentLength, acceptedClient);
+                            request.setBody(requestContentLength, acceptedClient.take(requestContentLength));
                         }
 
                         HttpResponse response;
@@ -205,14 +225,16 @@ public class HttpServer implements Disposable
 
                         if (response == null)
                         {
-                            final MutableHttpResponse mutableResponse = new MutableHttpResponse();
-                            mutableResponse.setHTTPVersion(request.getHttpVersion());
-                            mutableResponse.setStatusCode(500);
-                            mutableResponse.setBody("<html><body>" + mutableResponse.getStatusCode() + ": " + getReasonPhrase(mutableResponse.getStatusCode()) + "</body></html>");
-                            response = mutableResponse;
+                            final int responseStatusCode = 500;
+                            final String responseReasonPhrase = HttpServer.getReasonPhrase(responseStatusCode);
+                            response = HttpResponse.create()
+                                .setHttpVersion(request.getHttpVersion())
+                                .setStatusCode(responseStatusCode)
+                                .setReasonPhrase(responseReasonPhrase)
+                                .setBody(responseStatusCode + ": " + responseReasonPhrase);
                         }
 
-                        String httpVersion = response.getHTTPVersion();
+                        String httpVersion = response.getHttpVersion();
                         if (Strings.isNullOrEmpty(httpVersion))
                         {
                             httpVersion = "HTTP/1.1";
@@ -235,17 +257,9 @@ public class HttpServer implements Disposable
                         }
                         acceptedClientWriteStream.writeLine().await();
 
-                        final ByteReadStream responseBody = response.getBody();
-                        if (responseBody != null)
+                        try (final ByteReadStream responseBody = response.getBody())
                         {
-                            try
-                            {
-                                acceptedClientWriteStream.writeAll(responseBody).await();
-                            }
-                            finally
-                            {
-                                responseBody.dispose().await();
-                            }
+                            acceptedClientWriteStream.writeAll(responseBody).await();
                         }
                         acceptedClientBufferedWriteStream.flush().await();
                     }

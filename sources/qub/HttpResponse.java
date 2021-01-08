@@ -5,11 +5,16 @@ package qub;
  */
 public interface HttpResponse extends Disposable
 {
+    static MutableHttpResponse create()
+    {
+        return MutableHttpResponse.create();
+    }
+
     /**
      * Get the HTTP version of this response.
      * @return The HTTP version of this response.
      */
-    String getHTTPVersion();
+    String getHttpVersion();
 
     /**
      * Get the status code of this response.
