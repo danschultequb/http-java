@@ -27,7 +27,7 @@ public class JavaHttpClient implements HttpClient
             HttpResponse result;
             try
             {
-                final java.net.URL url = new java.net.URL(request.getURL().toString());
+                final java.net.URL url = new java.net.URL(request.getURL().toString(true));
                 final java.net.HttpURLConnection urlConnection = (java.net.HttpURLConnection)url.openConnection();
                 urlConnection.setInstanceFollowRedirects(false);
 

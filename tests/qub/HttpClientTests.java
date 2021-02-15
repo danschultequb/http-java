@@ -312,7 +312,10 @@ public interface HttpClientTests
                         test.assertEqual(null, bodyRequestUrl.getPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
-                        test.assertEqual(Iterable.create(1.0, 2.0, 3.0), bodyJson.getArray("body").await().map((JSONSegment segment) -> ((JSONNumber)segment).getValue()));
+                        test.assertEqual(
+                            Iterable.create(1, 2, 3),
+                            bodyJson.getArray("body").await()
+                                .map((JSONSegment segment) -> ((JSONNumber)segment).getIntegerValue().await()));
                     });
 
                 sendTest.run(
@@ -385,7 +388,10 @@ public interface HttpClientTests
                         test.assertEqual(null, bodyRequestUrl.getPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
-                        test.assertEqual(Iterable.create(1.0, 2.0, 3.0), bodyJson.getArray("body").await().map((JSONSegment segment) -> ((JSONNumber)segment).getValue()));
+                        test.assertEqual(
+                            Iterable.create(1, 2, 3),
+                            bodyJson.getArray("body").await()
+                                .map((JSONSegment segment) -> ((JSONNumber)segment).getIntegerValue().await()));
                     });
 
                 sendTest.run(
@@ -458,7 +464,10 @@ public interface HttpClientTests
                         test.assertEqual(null, bodyRequestUrl.getPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
-                        test.assertEqual(Iterable.create(1.0, 2.0, 3.0), bodyJson.getArray("body").await().map((JSONSegment segment) -> ((JSONNumber)segment).getValue()));
+                        test.assertEqual(
+                            Iterable.create(1, 2, 3),
+                            bodyJson.getArray("body").await()
+                                .map((JSONSegment segment) -> ((JSONNumber)segment).getIntegerValue().await()));
                     });
             });
 
@@ -559,7 +568,10 @@ public interface HttpClientTests
                         .setString("url", request.getURL().toString())
                         .setObject("headers", JSONObject.create()
                             .setAll(request.getHeaders().map((HttpHeader header) -> JSONProperty.create(header.getName(), header.getValue()))))
-                        .setArrayOrNull("body", request.getBody() == null ? null : JSONArray.create(ByteArray.create(request.getBody().readAllBytes().await()).map(JSONNumber::get)))
+                        .setArrayOrNull("body", request.getBody() == null
+                            ? null :
+                            JSONArray.create(
+                                ByteArray.create(request.getBody().readAllBytes().await()).map(JSONNumber::create)))
                         .toString());
                 }
 

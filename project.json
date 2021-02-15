@@ -1,13 +1,13 @@
 {
   "publisher": "qub",
   "project": "http-java",
-  "version": "14",
+  "version": "18",
   "java": {
     "dependencies": [
       {
         "publisher": "qub",
         "project": "dns-java",
-        "version": "16"
+        "version": "20"
       }
     ]
   }
