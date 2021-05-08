@@ -7,7 +7,6 @@ public class HttpServer implements Disposable
 {
     private final TCPServer tcpServer;
     private final AsyncRunner asyncRunner;
-    private boolean disposed;
     private final MutableMap<PathPattern,Function2<Indexable<String>,HttpRequest,HttpResponse>> paths;
     private Function1<HttpRequest,HttpResponse> notFoundAction;
 
@@ -76,6 +75,7 @@ public class HttpServer implements Disposable
     {
         PreCondition.assertNotNullAndNotEmpty(pathString, "pathString");
         PreCondition.assertNotNull(pathAction, "pathAction");
+        PreCondition.assertNotDisposed(this, "this");
 
         return this.setPath(pathString, (Indexable<String> pathMatches, HttpRequest request) -> pathAction.run(request));
     }
@@ -89,6 +89,7 @@ public class HttpServer implements Disposable
     {
         PreCondition.assertNotNullAndNotEmpty(pathString, "pathString");
         PreCondition.assertNotNull(pathAction, "pathAction");
+        PreCondition.assertNotDisposed(this, "this");
 
         String normalizedPathString = pathString;
         if (normalizedPathString.contains("\\"))
@@ -123,6 +124,7 @@ public class HttpServer implements Disposable
     public HttpServer setNotFound(Function1<HttpRequest,HttpResponse> notFoundAction)
     {
         PreCondition.assertNotNull(notFoundAction, "notFoundAction");
+        PreCondition.assertNotDisposed(this, "this");
 
         this.notFoundAction = notFoundAction;
 
@@ -135,19 +137,14 @@ public class HttpServer implements Disposable
      */
     public Result<Void> start()
     {
+        PreCondition.assertNotDisposed(this, "this");
+
         return this.asyncRunner.schedule(() ->
         {
             while(!this.isDisposed())
             {
                 final TCPClient acceptedClient = this.tcpServer.accept()
-                    .catchError(java.net.SocketException.class, (java.net.SocketException error) ->
-                    {
-                        final String errorMessage = error.getMessage().toLowerCase();
-                        if (!errorMessage.equals("socket closed"))
-                        {
-                            throw Exceptions.asRuntime(error);
-                        }
-                    })
+                    .catchError(SocketClosedException.class)
                     .await();
                 if (acceptedClient != null)
                 {
@@ -284,22 +281,13 @@ public class HttpServer implements Disposable
     @Override
     public boolean isDisposed()
     {
-        return this.disposed;
+        return this.tcpServer.isDisposed();
     }
 
     @Override
     public Result<Boolean> dispose()
     {
-        return Result.create(() ->
-        {
-            boolean result = !this.disposed;
-            if (result)
-            {
-                this.disposed = true;
-                result = this.tcpServer.dispose().await();
-            }
-            return result;
-        });
+        return this.tcpServer.dispose();
     }
 
     /**

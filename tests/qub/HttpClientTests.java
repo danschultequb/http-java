@@ -16,11 +16,12 @@ public interface HttpClientTests
 
                 runner.test("with non-null", (Test test) ->
                 {
-                    final ManualClock clock = ManualClock.create();
-                    final FakeNetwork network = new FakeNetwork(clock);
-                    final HttpClient httpClient = HttpClient.create(network);
-                    test.assertNotNull(httpClient);
-                    test.assertInstanceOf(httpClient, JavaHttpClient.class);
+                    try (final FakeDesktopProcess process = FakeDesktopProcess.create())
+                    {
+                        final HttpClient httpClient = HttpClient.create(process.getNetwork());
+                        test.assertNotNull(httpClient);
+                        test.assertInstanceOf(httpClient, JavaHttpClient.class);
+                    }
                 });
             });
         });
@@ -28,7 +29,9 @@ public interface HttpClientTests
 
     static void test(TestRunner runner, Function1<Network,HttpClient> creator)
     {
-        runner.testGroup(HttpClient.class, () ->
+        runner.testGroup(HttpClient.class,
+            (TestResources resources) -> Tuple.create(resources.getNetwork(), resources.getParallelAsyncRunner()),
+            (Network network, AsyncRunner parallelAsyncRunner) ->
         {
             runner.testGroup("send(HttpRequest)", () ->
             {
@@ -36,7 +39,7 @@ public interface HttpClientTests
                 {
                     runner.test(testName, (Test test) ->
                     {
-                        final HttpClient httpClient = creator.run(test.getNetwork());
+                        final HttpClient httpClient = creator.run(network);
                         test.assertThrows(() -> httpClient.send(request).await(), expected);
                     });
                 };
@@ -56,14 +59,11 @@ public interface HttpClientTests
                 {
                     runner.test("with " + responseStatusCode + " status code", (Test test) ->
                     {
-                        final Network network = test.getNetwork();
-                        final AsyncRunner asyncRunner = test.getParallelAsyncRunner();
-
                         final IPv4Address serverAddress = IPv4Address.localhost;
                         final int serverPort = 80;
 
                         final TCPServer tcpServer = network.createTCPServer(serverAddress, serverPort).await();
-                        try (final HttpServer result = HttpServer.create(tcpServer, asyncRunner))
+                        try (final HttpServer result = HttpServer.create(tcpServer, parallelAsyncRunner))
                         {
                             result.setNotFound((HttpRequest request) ->
                             {
@@ -119,8 +119,7 @@ public interface HttpClientTests
 
                     runner.test(testName.toString(), (Test test) ->
                     {
-                        final Network network = test.getNetwork();
-                        try (final HttpServer httpServer = HttpClientTests.createHttpServer(request.getURL(), test))
+                        try (final HttpServer httpServer = HttpClientTests.createHttpServer(request.getURL(), network, parallelAsyncRunner))
                         {
                             final HttpClient httpClient = creator.run(network);
                             try (final HttpResponse httpResponse = httpClient.send(request).await())
@@ -477,7 +476,7 @@ public interface HttpClientTests
                 {
                     runner.test("with " + url, (Test test) ->
                     {
-                        final HttpClient httpClient = creator.run(test.getNetwork());
+                        final HttpClient httpClient = creator.run(network);
                         test.assertThrows(() -> httpClient.get(url).await(), expected);
                     });
                 };
@@ -493,8 +492,7 @@ public interface HttpClientTests
                 {
                     runner.test("with " + url, (Test test) ->
                     {
-                        final Network network = test.getNetwork();
-                        try (final HttpServer httpServer = HttpClientTests.createHttpServer(url, test))
+                        try (final HttpServer httpServer = HttpClientTests.createHttpServer(url, network, parallelAsyncRunner))
                         {
                             final HttpClient httpClient = creator.run(network);
                             try (final HttpResponse httpResponse = httpClient.get(url).await())
@@ -533,13 +531,11 @@ public interface HttpClientTests
         });
     }
 
-    static HttpServer createHttpServer(URL requestUrl, Test test)
+    static HttpServer createHttpServer(URL requestUrl, Network network, AsyncRunner parallelAsyncRunner)
     {
         PreCondition.assertNotNull(requestUrl, "requestUrl");
-        PreCondition.assertNotNull(test, "test");
-
-        final Network network = test.getNetwork();
-        final AsyncRunner asyncRunner = test.getParallelAsyncRunner();
+        PreCondition.assertNotNull(network, "network");
+        PreCondition.assertNotNull(parallelAsyncRunner, "parallelAsyncRunner");
 
         final DNS dns = DNS.create();
         final IPv4Address serverAddress = dns.resolveHost(requestUrl.getHost()).await();
@@ -547,7 +543,7 @@ public interface HttpClientTests
         final int serverPort = requestPort != null ? requestPort : 80;
 
         final TCPServer tcpServer = network.createTCPServer(serverAddress, serverPort).await();
-        final HttpServer result = HttpServer.create(tcpServer, asyncRunner)
+        final HttpServer result = HttpServer.create(tcpServer, parallelAsyncRunner)
             .setPath("**", (HttpRequest request) ->
             {
                 final MutableHttpResponse httpResponse = MutableHttpResponse.create()

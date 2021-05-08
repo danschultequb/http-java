@@ -11,34 +11,42 @@ public interface HttpServerTests
         {
             runner.testGroup("constructor(TCPServer)", () ->
             {
-                runner.test("with null TCPServer", (Test test) ->
+                runner.test("with null TCPServer",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    test.assertThrows(() -> HttpServer.create(null, test.getParallelAsyncRunner()),
+                    test.assertThrows(() -> HttpServer.create(null, process.getParallelAsyncRunner()),
                         new PreConditionFailure("tcpServer cannot be null."));
                 });
 
-                runner.test("with null AsyncRunner", (Test test) ->
+                runner.test("with null AsyncRunner",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final TCPServer tcpServer = test.getNetwork().createTCPServer(23211).await())
+                    try (final TCPServer tcpServer = process.getNetwork().createTCPServer(23211).await())
                     {
                         test.assertThrows(() -> HttpServer.create(tcpServer, null),
                             new PreConditionFailure("asyncRunner cannot be null."));
                     }
                 });
 
-                runner.test("with disposed TCPServer", (Test test) ->
+                runner.test("with disposed TCPServer",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final TCPServer tcpServer = test.getNetwork().createTCPServer(23211).await())
+                    try (final TCPServer tcpServer = process.getNetwork().createTCPServer(23211).await())
                     {
                         test.assertTrue(tcpServer.dispose().await());
-                        test.assertThrows(() -> HttpServer.create(tcpServer, test.getParallelAsyncRunner()),
+                        test.assertThrows(() -> HttpServer.create(tcpServer, process.getParallelAsyncRunner()),
                             new PreConditionFailure("tcpServer.isDisposed() cannot be true."));
                     }
                 });
 
-                runner.test("with non-disposed TCPServer", (Test test) ->
+                runner.test("with non-disposed TCPServer",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer server = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer server = HttpServerTests.createHttpServer(process))
                     {
                         test.assertFalse(server.isDisposed());
                         test.assertEqual(HttpServerTests.serverAddress, server.getLocalIPAddress());
@@ -47,7 +55,7 @@ public interface HttpServerTests
 
                         final Result<Void> serverTask = server.start();
 
-                        final HttpClient client = HttpServerTests.createHttpClient(test);
+                        final HttpClient client = HttpServerTests.createHttpClient(process);
                         final HttpRequest request = HttpRequest.get("https://" + server.getLocalIPAddress() + ":" + server.getLocalPort() + "/hello").await();
                         try (final HttpResponse response = client.send(request).await())
                         {
@@ -59,16 +67,18 @@ public interface HttpServerTests
                         }
 
                         test.assertTrue(server.dispose().await());
-                        serverTask.await();
+                        test.assertNull(serverTask.await());
                     }
                 });
             });
 
             runner.testGroup("setPath(String,Function1<HttpRequest,HttpResponse>)", () ->
             {
-                runner.test("with null path", (Test test) ->
+                runner.test("with null path",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer server = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer server = HttpServerTests.createHttpServer(process))
                     {
                         test.assertThrows(() -> server.setPath(null, (HttpRequest request) -> null),
                             new PreConditionFailure("pathString cannot be null."));
@@ -76,9 +86,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with empty path", (Test test) ->
+                runner.test("with empty path",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer server = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer server = HttpServerTests.createHttpServer(process))
                     {
                         test.assertThrows(() -> server.setPath("", (HttpRequest request) -> null),
                             new PreConditionFailure("pathString cannot be empty."));
@@ -86,9 +98,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("/") + " and response is null", (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("/") + " and response is null",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer server = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer server = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = server.setPath("/", (HttpRequest request) -> null);
                         test.assertSame(server, setPathResult);
@@ -97,7 +111,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = server.start();
                         try
                         {
-                            final HttpClient client = HttpServerTests.createHttpClient(test);
+                            final HttpClient client = HttpServerTests.createHttpClient(process);
                             try (final HttpResponse response = client.get("http://" + server.getLocalIPAddress() + ":" + server.getLocalPort() + "/").await())
                             {
                                 test.assertNotNull(response);
@@ -113,9 +127,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("/") + " and response is not null", (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("/") + " and response is not null",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("/", (HttpRequest request) ->
                             HttpResponse.create()
@@ -127,7 +143,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient client = HttpServerTests.createHttpClient(test);
+                            final HttpClient client = HttpServerTests.createHttpClient(process);
                             final HttpResponse response = client.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort() + "/").await();
                             test.assertNotNull(response);
                             test.assertEqual(200, response.getStatusCode());
@@ -140,9 +156,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with an already existing path", (Test test) ->
+                runner.test("with an already existing path",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult1 = httpServer.setPath("/", (HttpRequest request) -> HttpResponse.create().setStatusCode(200));
                         test.assertSame(httpServer, setPathResult1);
@@ -155,7 +173,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient client = HttpServerTests.createHttpClient(test);
+                            final HttpClient client = HttpServerTests.createHttpClient(process);
                             final HttpResponse response = client.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort()).await();
                             test.assertNotNull(response);
                             test.assertEqual(201, response.getStatusCode());
@@ -168,9 +186,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("/redfish"), (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("/redfish"),
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("/redfish", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
@@ -178,9 +198,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("onefish"), (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("onefish"),
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("onefish", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
@@ -188,9 +210,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("/a\\nice/path"), (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("/a\\nice/path"),
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("/a\\nice/path", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
@@ -198,9 +222,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("/a\\nice/"), (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("/a\\nice/"),
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("/a\\nice/", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
@@ -208,9 +234,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("/a\\nice//"), (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("/a\\nice//"),
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("/a\\nice//", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
@@ -218,9 +246,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with " + Strings.escapeAndQuote("////"), (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("////"),
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("////", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
@@ -228,9 +258,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with multiple paths", (Test test) ->
+                runner.test("with multiple paths",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         httpServer
                             .setPath("/onefish", (HttpRequest request) -> HttpResponse.create()
@@ -242,7 +274,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient client = HttpServerTests.createHttpClient(test);
+                            final HttpClient client = HttpServerTests.createHttpClient(process);
                             final HttpResponse response1 = client.send(HttpRequest.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort() + "/onefish").await()).await();
                             test.assertNotNull(response1);
                             test.assertEqual(200, response1.getStatusCode());
@@ -270,9 +302,11 @@ public interface HttpServerTests
             
             runner.testGroup("setPath(String,Function2<Indexable<String>,HttpRequest,HttpResponse>)", () ->
             {
-                runner.test("with " + Strings.escapeAndQuote("/things/*"), (Test test) ->
+                runner.test("with " + Strings.escapeAndQuote("/things/*"),
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setPathResult = httpServer.setPath("/things/*", (Indexable<String> trackedValues, HttpRequest request) ->
                              HttpResponse.create()
@@ -284,7 +318,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient client = HttpServerTests.createHttpClient(test);
+                            final HttpClient client = HttpServerTests.createHttpClient(process);
                             final HttpResponse response = client.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort() + "/things/catsanddogs").await();
                             test.assertNotNull(response);
                             test.assertEqual(200, response.getStatusCode());
@@ -301,18 +335,22 @@ public interface HttpServerTests
 
             runner.testGroup("setNotFound()", () ->
             {
-                runner.test("with null", (Test test) ->
+                runner.test("with null",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         test.assertThrows(() -> httpServer.setNotFound(null),
                             new PreConditionFailure("notFoundAction cannot be null."));
                     }
                 });
 
-                runner.test("with function that returns a non-null response", (Test test) ->
+                runner.test("with function that returns a non-null response",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setNotFoundResult = httpServer.setNotFound((HttpRequest request) ->
                         {
@@ -324,7 +362,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient client = HttpServerTests.createHttpClient(test);
+                            final HttpClient client = HttpServerTests.createHttpClient(process);
                             try (final HttpResponse response = client.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort() + "/notfound").await())
                             {
                                 test.assertNotNull(response);
@@ -339,9 +377,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with function that returns a null response", (Test test) ->
+                runner.test("with function that returns a null response",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final HttpServer setNotFoundResult = httpServer.setNotFound((HttpRequest request) -> null);
                         test.assertSame(httpServer, setNotFoundResult);
@@ -349,7 +389,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient client = HttpServerTests.createHttpClient(test);
+                            final HttpClient client = HttpServerTests.createHttpClient(process);
                             try (final HttpResponse response = client.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort() + "/").await())
                             {
                                 test.assertNotNull(response);
@@ -368,51 +408,59 @@ public interface HttpServerTests
 
             runner.testGroup("start()", () ->
             {
-                runner.test("with TCPServer disposed before start()", (Test test) ->
+                runner.test("with TCPServer disposed before start()",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    final Network network = test.getNetwork();
+                    final Network network = process.getNetwork();
                     try (final TCPServer tcpServer = network.createTCPServer(HttpServerTests.serverAddress, HttpServerTests.serverPort).await())
                     {
-                        try (final HttpServer httpServer = HttpServer.create(tcpServer, test.getParallelAsyncRunner()))
+                        try (final HttpServer httpServer = HttpServer.create(tcpServer, process.getParallelAsyncRunner()))
                         {
                             test.assertTrue(tcpServer.dispose().await());
 
                             test.assertThrows(() -> httpServer.start().await(),
-                                new java.net.SocketException("Socket is closed"));
+                                new PreConditionFailure("this.isDisposed() cannot be true."));
                         }
                     }
                 });
 
-                runner.test("with TCPServer disposed during start()", (Test test) ->
+                runner.test("with TCPServer disposed during start()",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    final Network network = test.getNetwork();
+                    final Network network = process.getNetwork();
                     try (final TCPServer tcpServer = network.createTCPServer(HttpServerTests.serverAddress, HttpServerTests.serverPort).await())
                     {
-                        try (final HttpServer httpServer = HttpServer.create(tcpServer, test.getParallelAsyncRunner()))
+                        try (final HttpServer httpServer = HttpServer.create(tcpServer, process.getParallelAsyncRunner()))
                         {
                             final Result<Void> serverTask = httpServer.start();
 
                             test.assertTrue(tcpServer.dispose().await());
 
-                            test.assertThrows(serverTask::await,
-                                new java.net.SocketException("Socket is closed"));
+                            test.assertNull(serverTask.await());
                         }
                     }
                 });
 
-                runner.test("with HttpServer disposed before start()", (Test test) ->
+                runner.test("with HttpServer disposed before start()",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         test.assertTrue(httpServer.dispose().await());
 
-                        test.assertNull(httpServer.start().await());
+                        test.assertThrows(httpServer::start,
+                            new PreConditionFailure("this.isDisposed() cannot be true."));
                     }
                 });
 
-                runner.test("with HttpServer disposed during start()", (Test test) ->
+                runner.test("with HttpServer disposed during start()",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         final Result<Void> serverTask = httpServer.start();
 
@@ -422,9 +470,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with one header and no body", (Test test) ->
+                runner.test("with one header and no body",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         httpServer.setPath("/echo", (HttpRequest request) ->
                         {
@@ -442,7 +492,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient httpClient = HttpServerTests.createHttpClient(test);
+                            final HttpClient httpClient = HttpServerTests.createHttpClient(process);
                             try (final HttpResponse response = httpClient.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort() + "/echo", HttpHeaders.create().set("a", "b")).await())
                             {
                                 test.assertNotNull(response);
@@ -460,9 +510,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with content-length header but no body", (Test test) ->
+                runner.test("with content-length header but no body",
+                    (TestResources resources) -> Tuple.create(resources.getNetwork(), resources.getParallelAsyncRunner()),
+                    (Test test, Network network, AsyncRunner parallelAsyncRunner) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(network, parallelAsyncRunner))
                     {
                         httpServer.setPath("/echo", (HttpRequest request) ->
                         {
@@ -480,7 +532,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient httpClient = HttpServerTests.createHttpClient(test);
+                            final HttpClient httpClient = HttpServerTests.createHttpClient(network);
                             try (final HttpResponse response = httpClient.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort() + "/echo", HttpHeaders.create().set("content-length", "5")).await())
                             {
                                 test.assertNotNull(response);
@@ -498,9 +550,11 @@ public interface HttpServerTests
                     }
                 });
 
-                runner.test("with no request path", (Test test) ->
+                runner.test("with no request path",
+                    (TestResources resources) -> Tuple.create(resources.createFakeDesktopProcess()),
+                    (Test test, FakeDesktopProcess process) ->
                 {
-                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(test))
+                    try (final HttpServer httpServer = HttpServerTests.createHttpServer(process))
                     {
                         httpServer.setPath("/", (HttpRequest request) ->
                         {
@@ -519,7 +573,7 @@ public interface HttpServerTests
                         final Result<Void> serverTask = httpServer.start();
                         try
                         {
-                            final HttpClient httpClient = HttpServerTests.createHttpClient(test);
+                            final HttpClient httpClient = HttpServerTests.createHttpClient(process);
                             try (final HttpResponse response = httpClient.get("http://" + httpServer.getLocalIPAddress() + ":" + httpServer.getLocalPort(), HttpHeaders.create().set("a", "b")).await())
                             {
                                 test.assertNotNull(response);
@@ -567,14 +621,29 @@ public interface HttpServerTests
         });
     }
 
-    static HttpServer createHttpServer(Test test)
+    static HttpServer createHttpServer(DesktopProcess process)
     {
-        final TCPServer tcpServer = test.getNetwork().createTCPServer(HttpServerTests.serverAddress, HttpServerTests.serverPort).await();
-        return HttpServer.create(tcpServer, test.getParallelAsyncRunner());
+        PreCondition.assertNotNull(process, "process");
+
+        return HttpServerTests.createHttpServer(process.getNetwork(), process.getParallelAsyncRunner());
     }
 
-    static HttpClient createHttpClient(Test test)
+    static HttpServer createHttpServer(Network network, AsyncRunner asyncRunner)
     {
-        return BasicHttpClient.create(test.getNetwork());
+        PreCondition.assertNotNull(network, "network");
+        PreCondition.assertNotNull(asyncRunner, "asyncRunner");
+
+        final TCPServer tcpServer = network.createTCPServer(HttpServerTests.serverAddress, HttpServerTests.serverPort).await();
+        return HttpServer.create(tcpServer, asyncRunner);
+    }
+
+    static HttpClient createHttpClient(DesktopProcess process)
+    {
+        return HttpServerTests.createHttpClient(process.getNetwork());
+    }
+
+    static HttpClient createHttpClient(Network network)
+    {
+        return BasicHttpClient.create(network);
     }
 }

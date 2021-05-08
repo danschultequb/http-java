@@ -46,7 +46,7 @@ public class JavaHttpClient implements HttpClient
                     {
                         urlConnection.setDoOutput(true);
 
-                        try (final ByteWriteStream writeStream = new OutputStreamToByteWriteStream(urlConnection.getOutputStream()))
+                        try (final ByteWriteStream writeStream = OutputStreamToByteWriteStream.create(urlConnection.getOutputStream()))
                         {
                             writeStream.writeAll(body).await();
                         }
