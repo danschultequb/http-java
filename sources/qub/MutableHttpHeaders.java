@@ -95,6 +95,27 @@ public class MutableHttpHeaders implements HttpHeaders
         return this;
     }
 
+    public MutableHttpHeaders setAuthorization(String authorization)
+    {
+        PreCondition.assertNotNullAndNotEmpty(authorization, "authorization");
+
+        return this.set(HttpHeaders.authorizationHeaderName, authorization);
+    }
+
+    public MutableHttpHeaders setAuthorizationBearer(String authorizationBearer)
+    {
+        PreCondition.assertNotNullAndNotEmpty(authorizationBearer, "authorizationBearer");
+
+        return this.setAuthorization(HttpHeaders.bearerPrefix + authorizationBearer);
+    }
+
+    public MutableHttpHeaders setAuthorizationToken(String authorizationToken)
+    {
+        PreCondition.assertNotNullAndNotEmpty(authorizationToken, "authorizationToken");
+
+        return this.setAuthorization(HttpHeaders.tokenPrefix + authorizationToken);
+    }
+
     /**
      * Get the header in this collection that has the provided header name.
      * @param headerName The name of the header to get.
@@ -105,7 +126,7 @@ public class MutableHttpHeaders implements HttpHeaders
         PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
 
         return this.headerMap.get(MutableHttpHeaders.getHeaderKey(headerName))
-            .convertError(NotFoundException.class, () -> new NotFoundException(headerName));
+            .convertError(NotFoundException.class, () -> new NotFoundException("No " + Strings.escapeAndQuote(headerName) + " header found."));
     }
 
     public Result<HttpHeader> remove(String headerName)
@@ -113,7 +134,7 @@ public class MutableHttpHeaders implements HttpHeaders
         PreCondition.assertNotNullAndNotEmpty(headerName, "headerName");
 
         return this.headerMap.remove(MutableHttpHeaders.getHeaderKey(headerName))
-            .convertError(NotFoundException.class, () -> new NotFoundException(headerName));
+            .convertError(NotFoundException.class, () -> new NotFoundException("No " + Strings.escapeAndQuote(headerName) + " header found."));
     }
 
     @Override

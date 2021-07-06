@@ -238,6 +238,126 @@ public interface MutableHttpRequestTests
                 });
             });
 
+            runner.testGroup("setAuthorizationHeader(String)", () ->
+            {
+                final Action2<String,Throwable> setAuthorizationErrorTest = (String authorization, Throwable expected) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorization), (Test test) ->
+                    {
+                        final MutableHttpRequest request = MutableHttpRequest.create();
+                        test.assertThrows(() -> request.setAuthorizationHeader(authorization),
+                            expected);
+                        test.assertThrows(() -> request.getAuthorizationHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> request.getAuthorizationBearerHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> request.getAuthorizationTokenHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertEqual(HttpHeaders.create(), request.getHeaders());
+                    });
+                };
+
+                setAuthorizationErrorTest.run(null, new PreConditionFailure("authorizationHeaderValue cannot be null."));
+                setAuthorizationErrorTest.run("", new PreConditionFailure("authorizationHeaderValue cannot be empty."));
+
+                final Action1<String> setAuthorizationTest = (String authorization) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorization), (Test test) ->
+                    {
+                        final MutableHttpRequest request = MutableHttpRequest.create();
+                        final MutableHttpRequest setAuthorizationResult = request.setAuthorizationHeader(authorization);
+                        test.assertSame(request, setAuthorizationResult);
+                        test.assertEqual(authorization, request.getAuthorizationHeaderValue().await());
+                    });
+                };
+
+                setAuthorizationTest.run("abcdef");
+                setAuthorizationTest.run("token hello");
+                setAuthorizationTest.run("bearer there");
+            });
+
+            runner.testGroup("setAuthorizationBearer(String)", () ->
+            {
+                final Action2<String,Throwable> setAuthorizationBearerErrorTest = (String authorizationBearer, Throwable expected) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationBearer), (Test test) ->
+                    {
+                        final MutableHttpRequest request = MutableHttpRequest.create();
+                        test.assertThrows(() -> request.setAuthorizationBearerHeader(authorizationBearer),
+                            expected);
+                        test.assertThrows(() -> request.getAuthorizationHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> request.getAuthorizationBearerHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> request.getAuthorizationTokenHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertEqual(HttpHeaders.create(), request.getHeaders());
+                    });
+                };
+
+                setAuthorizationBearerErrorTest.run(null, new PreConditionFailure("authorizationBearer cannot be null."));
+                setAuthorizationBearerErrorTest.run("", new PreConditionFailure("authorizationBearer cannot be empty."));
+
+                final Action1<String> setAuthorizationBearerTest = (String authorizationBearer) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationBearer), (Test test) ->
+                    {
+                        final MutableHttpRequest request = MutableHttpRequest.create();
+                        final MutableHttpRequest setAuthorizationResult = request.setAuthorizationBearerHeader(authorizationBearer);
+                        test.assertSame(request, setAuthorizationResult);
+                        test.assertEqual("Bearer " + authorizationBearer, request.getAuthorizationHeaderValue().await());
+                        test.assertEqual(authorizationBearer, request.getAuthorizationBearerHeaderValue().await());
+                        test.assertThrows(() -> request.getAuthorizationTokenHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found with a \"Token \" prefix."));
+                    });
+                };
+
+                setAuthorizationBearerTest.run("abcdef");
+                setAuthorizationBearerTest.run("hello");
+                setAuthorizationBearerTest.run("there");
+            });
+
+            runner.testGroup("setAuthorizationToken(String)", () ->
+            {
+                final Action2<String,Throwable> setAuthorizationTokenErrorTest = (String authorizationToken, Throwable expected) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationToken), (Test test) ->
+                    {
+                        final MutableHttpRequest request = MutableHttpRequest.create();
+                        test.assertThrows(() -> request.setAuthorizationTokenHeader(authorizationToken),
+                            expected);
+                        test.assertThrows(() -> request.getAuthorizationHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> request.getAuthorizationBearerHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> request.getAuthorizationTokenHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertEqual(HttpHeaders.create(), request.getHeaders());
+                    });
+                };
+
+                setAuthorizationTokenErrorTest.run(null, new PreConditionFailure("authorizationToken cannot be null."));
+                setAuthorizationTokenErrorTest.run("", new PreConditionFailure("authorizationToken cannot be empty."));
+
+                final Action1<String> setAuthorizationTokenTest = (String authorizationToken) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationToken), (Test test) ->
+                    {
+                        final MutableHttpRequest request = MutableHttpRequest.create();
+                        final MutableHttpRequest setAuthorizationResult = request.setAuthorizationTokenHeader(authorizationToken);
+                        test.assertSame(request, setAuthorizationResult);
+                        test.assertEqual("Token " + authorizationToken, request.getAuthorizationHeaderValue().await());
+                        test.assertThrows(() -> request.getAuthorizationBearerHeaderValue().await(),
+                            new NotFoundException("No \"Authorization\" header found with a \"Bearer \" prefix."));
+                        test.assertEqual(authorizationToken, request.getAuthorizationTokenHeaderValue().await());
+                    });
+                };
+
+                setAuthorizationTokenTest.run("abcdef");
+                setAuthorizationTokenTest.run("hello");
+                setAuthorizationTokenTest.run("there");
+            });
+
             runner.testGroup("setBody(byte[])", () ->
             {
                 runner.test("with null", (Test test) ->

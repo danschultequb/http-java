@@ -166,18 +166,140 @@ public interface MutableHttpHeadersTests
                 });
             });
 
+            runner.testGroup("setAuthorization(String)", () ->
+            {
+                final Action2<String,Throwable> setAuthorizationErrorTest = (String authorization, Throwable expected) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorization), (Test test) ->
+                    {
+                        final MutableHttpHeaders headers = MutableHttpHeaders.create();
+                        test.assertThrows(() -> headers.setAuthorization(authorization),
+                            expected);
+                        test.assertThrows(() -> headers.getAuthorization().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> headers.getAuthorizationBearer().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> headers.getAuthorizationToken().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertEqual(Iterable.create(), headers);
+                    });
+                };
+
+                setAuthorizationErrorTest.run(null, new PreConditionFailure("authorization cannot be null."));
+                setAuthorizationErrorTest.run("", new PreConditionFailure("authorization cannot be empty."));
+
+                final Action1<String> setAuthorizationTest = (String authorization) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorization), (Test test) ->
+                    {
+                        final MutableHttpHeaders headers = MutableHttpHeaders.create();
+                        final MutableHttpHeaders setAuthorizationResult = headers.setAuthorization(authorization);
+                        test.assertSame(headers, setAuthorizationResult);
+                        test.assertEqual(authorization, headers.getAuthorization().await());
+                    });
+                };
+
+                setAuthorizationTest.run("abcdef");
+                setAuthorizationTest.run("token hello");
+                setAuthorizationTest.run("bearer there");
+            });
+
+            runner.testGroup("setAuthorizationBearer(String)", () ->
+            {
+                final Action2<String,Throwable> setAuthorizationBearerErrorTest = (String authorizationBearer, Throwable expected) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationBearer), (Test test) ->
+                    {
+                        final MutableHttpHeaders headers = MutableHttpHeaders.create();
+                        test.assertThrows(() -> headers.setAuthorizationBearer(authorizationBearer),
+                            expected);
+                        test.assertThrows(() -> headers.getAuthorization().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> headers.getAuthorizationBearer().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> headers.getAuthorizationToken().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertEqual(Iterable.create(), headers);
+                    });
+                };
+
+                setAuthorizationBearerErrorTest.run(null, new PreConditionFailure("authorizationBearer cannot be null."));
+                setAuthorizationBearerErrorTest.run("", new PreConditionFailure("authorizationBearer cannot be empty."));
+
+                final Action1<String> setAuthorizationBearerTest = (String authorizationBearer) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationBearer), (Test test) ->
+                    {
+                        final MutableHttpHeaders headers = MutableHttpHeaders.create();
+                        final MutableHttpHeaders setAuthorizationResult = headers.setAuthorizationBearer(authorizationBearer);
+                        test.assertSame(headers, setAuthorizationResult);
+                        test.assertEqual("Bearer " + authorizationBearer, headers.getAuthorization().await());
+                        test.assertEqual(authorizationBearer, headers.getAuthorizationBearer().await());
+                        test.assertThrows(() -> headers.getAuthorizationToken().await(),
+                            new NotFoundException("No \"Authorization\" header found with a \"Token \" prefix."));
+                    });
+                };
+
+                setAuthorizationBearerTest.run("abcdef");
+                setAuthorizationBearerTest.run("hello");
+                setAuthorizationBearerTest.run("there");
+            });
+
+            runner.testGroup("setAuthorizationToken(String)", () ->
+            {
+                final Action2<String,Throwable> setAuthorizationTokenErrorTest = (String authorizationToken, Throwable expected) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationToken), (Test test) ->
+                    {
+                        final MutableHttpHeaders headers = MutableHttpHeaders.create();
+                        test.assertThrows(() -> headers.setAuthorizationToken(authorizationToken),
+                            expected);
+                        test.assertThrows(() -> headers.getAuthorization().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> headers.getAuthorizationBearer().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertThrows(() -> headers.getAuthorizationToken().await(),
+                            new NotFoundException("No \"Authorization\" header found."));
+                        test.assertEqual(Iterable.create(), headers);
+                    });
+                };
+
+                setAuthorizationTokenErrorTest.run(null, new PreConditionFailure("authorizationToken cannot be null."));
+                setAuthorizationTokenErrorTest.run("", new PreConditionFailure("authorizationToken cannot be empty."));
+
+                final Action1<String> setAuthorizationTokenTest = (String authorizationToken) ->
+                {
+                    runner.test("with " + Strings.escapeAndQuote(authorizationToken), (Test test) ->
+                    {
+                        final MutableHttpHeaders headers = MutableHttpHeaders.create();
+                        final MutableHttpHeaders setAuthorizationResult = headers.setAuthorizationToken(authorizationToken);
+                        test.assertSame(headers, setAuthorizationResult);
+                        test.assertEqual("Token " + authorizationToken, headers.getAuthorization().await());
+                        test.assertThrows(() -> headers.getAuthorizationBearer().await(),
+                            new NotFoundException("No \"Authorization\" header found with a \"Bearer \" prefix."));
+                        test.assertEqual(authorizationToken, headers.getAuthorizationToken().await());
+                    });
+                };
+
+                setAuthorizationTokenTest.run("abcdef");
+                setAuthorizationTokenTest.run("hello");
+                setAuthorizationTokenTest.run("there");
+            });
+
             runner.testGroup("contains(String)", () ->
             {
                 runner.test("with null", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.contains((String)null), new PreConditionFailure("headerName cannot be null."));
+                    test.assertThrows(() -> headers.contains((String)null),
+                        new PreConditionFailure("headerName cannot be null."));
                 });
 
                 runner.test("with empty", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.contains(""), new PreConditionFailure("headerName cannot be empty."));
+                    test.assertThrows(() -> headers.contains(""),
+                        new PreConditionFailure("headerName cannot be empty."));
                 });
 
                 runner.test("with non-existing header name", (Test test) ->
@@ -206,19 +328,22 @@ public interface MutableHttpHeadersTests
                 runner.test("with null header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.get(null), new PreConditionFailure("headerName cannot be null."));
+                    test.assertThrows(() -> headers.get(null),
+                        new PreConditionFailure("headerName cannot be null."));
                 });
 
                 runner.test("with empty header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.get(""), new PreConditionFailure("headerName cannot be empty."));
+                    test.assertThrows(() -> headers.get(""),
+                        new PreConditionFailure("headerName cannot be empty."));
                 });
 
                 runner.test("with non-existing header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.get("header-name").await(), new NotFoundException("header-name"));
+                    test.assertThrows(() -> headers.get("header-name").await(),
+                        new NotFoundException("No \"header-name\" header found."));
                 });
 
                 runner.test("with existing header name", (Test test) ->
@@ -253,7 +378,8 @@ public interface MutableHttpHeadersTests
                 runner.test("with non-existing header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.getValue("header-name").await(), new NotFoundException("header-name"));
+                    test.assertThrows(() -> headers.getValue("header-name").await(),
+                        new NotFoundException("No \"header-name\" header found."));
                 });
 
                 runner.test("with existing header name", (Test test) ->
@@ -276,19 +402,22 @@ public interface MutableHttpHeadersTests
                 runner.test("with null", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.remove(null), new PreConditionFailure("headerName cannot be null."));
+                    test.assertThrows(() -> headers.remove(null),
+                        new PreConditionFailure("headerName cannot be null."));
                 });
 
                 runner.test("with empty", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.remove(""), new PreConditionFailure("headerName cannot be empty."));
+                    test.assertThrows(() -> headers.remove(""),
+                        new PreConditionFailure("headerName cannot be empty."));
                 });
 
                 runner.test("with not found header name", (Test test) ->
                 {
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
-                    test.assertThrows(() -> headers.remove("A").await(), new NotFoundException("A"));
+                    test.assertThrows(() -> headers.remove("A").await(),
+                        new NotFoundException("No \"A\" header found."));
                 });
 
                 runner.test("with found header name", (Test test) ->
@@ -296,7 +425,8 @@ public interface MutableHttpHeadersTests
                     final MutableHttpHeaders headers = MutableHttpHeaders.create();
                     headers.set("A", "B");
                     test.assertEqual(HttpHeader.create("A", "B"), headers.remove("A").await());
-                    test.assertThrows(() -> headers.remove("A").await(), new NotFoundException("A"));
+                    test.assertThrows(() -> headers.remove("A").await(),
+                        new NotFoundException("No \"A\" header found."));
                 });
             });
         });

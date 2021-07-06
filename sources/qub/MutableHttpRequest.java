@@ -34,6 +34,27 @@ public interface MutableHttpRequest extends HttpRequest
 
     MutableHttpRequest setHeaders(Iterable<HttpHeader> headers);
 
+    default MutableHttpRequest setAuthorizationHeader(String authorizationHeaderValue)
+    {
+        PreCondition.assertNotNullAndNotEmpty(authorizationHeaderValue, "authorizationHeaderValue");
+
+        return this.setHeader(HttpHeaders.authorizationHeaderName, authorizationHeaderValue);
+    }
+
+    default MutableHttpRequest setAuthorizationBearerHeader(String authorizationBearer)
+    {
+        PreCondition.assertNotNullAndNotEmpty(authorizationBearer, "authorizationBearer");
+
+        return this.setAuthorizationHeader(HttpHeaders.bearerPrefix + authorizationBearer);
+    }
+
+    default MutableHttpRequest setAuthorizationTokenHeader(String authorizationToken)
+    {
+        PreCondition.assertNotNullAndNotEmpty(authorizationToken, "authorizationToken");
+
+        return this.setAuthorizationHeader(HttpHeaders.tokenPrefix + authorizationToken);
+    }
+
     MutableHttpRequest setBody(long contentLength, ByteReadStream body);
 
     default MutableHttpRequest setBody(byte[] bodyBytes)

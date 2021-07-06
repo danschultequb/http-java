@@ -54,6 +54,21 @@ public interface HttpRequest
         return this.getHeaders().getValue(headerName);
     }
 
+    default Result<String> getAuthorizationHeaderValue()
+    {
+        return this.getHeaders().getAuthorization();
+    }
+
+    default Result<String> getAuthorizationBearerHeaderValue()
+    {
+        return this.getHeaders().getAuthorizationBearer();
+    }
+
+    default Result<String> getAuthorizationTokenHeaderValue()
+    {
+        return this.getHeaders().getAuthorizationToken();
+    }
+
     /**
      * Get the parsed value of the Content-Length header that has been set in this request.
      * @return The parsed value of the Content-Length header or an error if the header was not
