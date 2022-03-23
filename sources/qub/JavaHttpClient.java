@@ -80,7 +80,7 @@ public class JavaHttpClient implements HttpClient
                 final java.io.InputStream javaResponseBody = 400 <= statusCode
                     ? urlConnection.getErrorStream()
                     : urlConnection.getInputStream();
-                response.setBody(new InputStreamToByteReadStream(javaResponseBody));
+                response.setBody(InputStreamToByteReadStream.create(javaResponseBody));
 
                 result = response;
             }

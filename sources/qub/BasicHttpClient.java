@@ -1,5 +1,8 @@
 package qub;
 
+/**
+ * A simple implementation of an {@link HttpClient}.
+ */
 public class BasicHttpClient implements HttpClient
 {
     private final Network network;

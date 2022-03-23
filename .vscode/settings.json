@@ -1,0 +1,13 @@
+{
+  "java.project.sourcePaths": [
+    "tests",
+    "sources"
+  ],
+  "java.project.referencedLibraries": [
+    "C:/qub/qub/lib-java/versions/179/lib-java.jar",
+    "C:/qub/qub/lib-java/versions/179/lib-java.tests.jar"
+  ],
+  "java.foldingRange.enabled": false,
+  "java.format.settings.url": "C:/qub/qub/javaproject-java/data/DansCodeStyle.xml",
+  "java.format.enabled": true
+}
