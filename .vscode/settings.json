@@ -4,8 +4,8 @@
     "sources"
   ],
   "java.project.referencedLibraries": [
-    "C:/qub/qub/lib-java/versions/183/lib-java.jar",
-    "C:/qub/qub/lib-java/versions/183/lib-java.tests.jar"
+    "C:/qub/qub/lib-java/versions/186/lib-java.jar",
+    "C:/qub/qub/lib-java/versions/186/lib-java.tests.jar"
   ],
   "java.foldingRange.enabled": false,
   "java.format.settings.url": "C:/qub/qub/javaproject-java/data/DansCodeStyle.xml",
