@@ -2,7 +2,7 @@
   "$schema": "file:///C:/qub/qub/javaproject-java/data/javaproject.schema.json",
   "publisher": "qub",
   "project": "http-java",
-  "version": "58",
+  "version": "59",
   "java": {
     "dependencies": [
       {

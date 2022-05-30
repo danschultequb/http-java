@@ -411,7 +411,7 @@ public interface MutableHttpResponseTests
                         final MutableHttpResponse httpResponse = MutableHttpResponse.create();
                         final MutableHttpResponse setBodyResult = httpResponse.setBody(body);
                         test.assertSame(httpResponse, setBodyResult);
-                        test.assertEqual(body, CharacterReadStream.create(httpResponse.getBody()).readEntireString().catchError(EndOfStreamException.class, () -> "").await());
+                        test.assertEqual(body, CharacterReadStream.create(httpResponse.getBody()).readEntireString().catchError(EmptyException.class, () -> "").await());
                     });
                 };
 

@@ -111,7 +111,7 @@ public class BasicHttpClient implements HttpClient
                     while (0 < bytesToRead)
                     {
                         final byte[] bytesRead = bufferedByteReadStream.readBytes((int)Math.minimum(bytesToRead, Integers.maximum))
-                            .catchError(EndOfStreamException.class)
+                            .catchError(EmptyException.class)
                             .await();
                         if (bytesRead == null)
                         {
