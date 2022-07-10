@@ -270,12 +270,11 @@ public class HttpServer implements Disposable
     }
 
     /**
-     * Get all of the paths that have been registered with this server.
-     * @return All of the paths that have been registered with this server.
+     * Get the paths that have been registered with this server.
      */
-    public Iterable<PathPattern> getPaths()
+    public Iterator<PathPattern> iteratePaths()
     {
-        return this.paths.getKeys();
+        return this.paths.iterateKeys();
     }
 
     @Override

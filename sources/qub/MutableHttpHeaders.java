@@ -140,7 +140,7 @@ public class MutableHttpHeaders implements HttpHeaders
     @Override
     public Iterator<HttpHeader> iterate()
     {
-        return this.headerMap.getValues().iterate();
+        return this.headerMap.iterateValues();
     }
 
     @Override

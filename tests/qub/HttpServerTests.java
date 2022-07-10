@@ -2,10 +2,10 @@ package qub;
 
 public interface HttpServerTests
 {
-    IPv4Address serverAddress = IPv4Address.localhost;
-    int serverPort = 18034;
+    public static final IPv4Address serverAddress = IPv4Address.localhost;
+    public static final int serverPort = 18034;
 
-    static void test(TestRunner runner)
+    public static void test(TestRunner runner)
     {
         runner.testGroup(HttpServer.class, () ->
         {
@@ -51,7 +51,7 @@ public interface HttpServerTests
                         test.assertFalse(server.isDisposed());
                         test.assertEqual(HttpServerTests.serverAddress, server.getLocalIPAddress());
                         test.assertEqual(HttpServerTests.serverPort, server.getLocalPort());
-                        test.assertEqual(Iterable.create(), server.getPaths());
+                        test.assertEqual(Iterable.create(), server.iteratePaths().toList());
 
                         final Result<Void> serverTask = server.start();
 
@@ -82,7 +82,7 @@ public interface HttpServerTests
                     {
                         test.assertThrows(() -> server.setPath(null, (HttpRequest request) -> null),
                             new PreConditionFailure("pathString cannot be null."));
-                        test.assertEqual(Iterable.create(), server.getPaths());
+                        test.assertEqual(Iterable.create(), server.iteratePaths().toList());
                     }
                 });
 
@@ -94,7 +94,7 @@ public interface HttpServerTests
                     {
                         test.assertThrows(() -> server.setPath("", (HttpRequest request) -> null),
                             new PreConditionFailure("pathString cannot be empty."));
-                        test.assertEqual(Iterable.create(), server.getPaths());
+                        test.assertEqual(Iterable.create(), server.iteratePaths().toList());
                     }
                 });
 
@@ -106,7 +106,7 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult = server.setPath("/", (HttpRequest request) -> null);
                         test.assertSame(server, setPathResult);
-                        test.assertEqual(Iterable.create("/"), server.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/"), server.iteratePaths().toList().map(PathPattern::toString));
 
                         final Result<Void> serverTask = server.start();
                         try
@@ -138,7 +138,7 @@ public interface HttpServerTests
                                 .setStatusCode(200)
                                 .setBody("Hello!"));
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/"), httpServer.iteratePaths().toList().map(PathPattern::toString));
 
                         final Result<Void> serverTask = httpServer.start();
                         try
@@ -164,11 +164,11 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult1 = httpServer.setPath("/", (HttpRequest request) -> HttpResponse.create().setStatusCode(200));
                         test.assertSame(httpServer, setPathResult1);
-                        test.assertEqual(Iterable.create("/"), httpServer.getPaths().map(PathPattern::toString));
-                        
+                        test.assertEqual(Iterable.create("/"), httpServer.iteratePaths().toList().map(PathPattern::toString));
+
                         final HttpServer setPathResult2 = httpServer.setPath("/", (HttpRequest request) -> HttpResponse.create().setStatusCode(201));
                         test.assertSame(httpServer, setPathResult2);
-                        test.assertEqual(Iterable.create("/"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/"), httpServer.iteratePaths().toList().map(PathPattern::toString));
 
                         final Result<Void> serverTask = httpServer.start();
                         try
@@ -194,7 +194,7 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult = httpServer.setPath("/redfish", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/redfish"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/redfish"), httpServer.iteratePaths().toList().map(PathPattern::toString));
                     }
                 });
 
@@ -206,7 +206,7 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult = httpServer.setPath("onefish", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/onefish"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/onefish"), httpServer.iteratePaths().toList().map(PathPattern::toString));
                     }
                 });
 
@@ -218,7 +218,7 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult = httpServer.setPath("/a\\nice/path", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/a/nice/path"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/a/nice/path"), httpServer.iteratePaths().toList().map(PathPattern::toString));
                     }
                 });
 
@@ -230,7 +230,7 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult = httpServer.setPath("/a\\nice/", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/a/nice"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/a/nice"), httpServer.iteratePaths().toList().map(PathPattern::toString));
                     }
                 });
 
@@ -242,7 +242,7 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult = httpServer.setPath("/a\\nice//", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/a/nice"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/a/nice"), httpServer.iteratePaths().toList().map(PathPattern::toString));
                     }
                 });
 
@@ -254,7 +254,7 @@ public interface HttpServerTests
                     {
                         final HttpServer setPathResult = httpServer.setPath("////", (HttpRequest request) -> null);
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/"), httpServer.iteratePaths().toList().map(PathPattern::toString));
                     }
                 });
 
@@ -299,7 +299,7 @@ public interface HttpServerTests
                     }
                 });
             });
-            
+
             runner.testGroup("setPath(String,Function2<Indexable<String>,HttpRequest,HttpResponse>)", () ->
             {
                 runner.test("with " + Strings.escapeAndQuote("/things/*"),
@@ -313,7 +313,7 @@ public interface HttpServerTests
                                  .setStatusCode(200)
                                  .setBody("Hello, " + trackedValues.first() + "!"));
                         test.assertSame(httpServer, setPathResult);
-                        test.assertEqual(Iterable.create("/things/*"), httpServer.getPaths().map(PathPattern::toString));
+                        test.assertEqual(Iterable.create("/things/*"), httpServer.iteratePaths().toList().map(PathPattern::toString));
 
                         final Result<Void> serverTask = httpServer.start();
                         try
