@@ -311,7 +311,7 @@ public interface HttpServerTests
                         final HttpServer setPathResult = httpServer.setPath("/things/*", (Indexable<String> trackedValues, HttpRequest request) ->
                              HttpResponse.create()
                                  .setStatusCode(200)
-                                 .setBody("Hello, " + trackedValues.first() + "!"));
+                                 .setBody("Hello, " + trackedValues.first().await() + "!"));
                         test.assertSame(httpServer, setPathResult);
                         test.assertEqual(Iterable.create("/things/*"), httpServer.iteratePaths().toList().map(PathPattern::toString));
 
