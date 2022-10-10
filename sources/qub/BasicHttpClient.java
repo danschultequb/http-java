@@ -39,20 +39,17 @@ public class BasicHttpClient implements HttpClient
         PreCondition.assertNotNull(request, "request");
         PreCondition.assertNotNullAndNotEmpty(request.getMethod(), "request.getMethod()");
         PreCondition.assertNotNull(request.getURL(), "request.getURL()");
-        PreCondition.assertNotNullAndNotEmpty(request.getURL().getHost(), "request.getURL().getHost()");
 
         return Result.create(() ->
         {
             final MutableURL requestUrl = request.getURL().clone();
-            final String requestHost = requestUrl.getHost();
+            final String requestHost = requestUrl.getHost().await();
             final IPv4Address requestIPAddress = this.dns.resolveHost(requestHost).await();
             requestUrl.setHost(requestIPAddress.toString());
 
-            Integer requestPort = requestUrl.getPort();
-            if (requestPort == null)
-            {
-                requestPort = 80;
-            }
+            final int requestPort = requestUrl.getPort()
+                .catchError(NotFoundException.class, () -> 80)
+                .await();
 
             final MutableHttpResponse result = HttpResponse.create();
 

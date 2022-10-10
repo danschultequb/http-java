@@ -2,7 +2,7 @@ package qub;
 
 public interface MutableHttpRequestTests
 {
-    static void test(TestRunner runner)
+    public static void test(TestRunner runner)
     {
         runner.testGroup(MutableHttpRequest.class, () ->
         {
@@ -84,8 +84,12 @@ public interface MutableHttpRequestTests
                     });
                 };
 
-                setUrlErrorTest.run(null, new PreConditionFailure("url cannot be null."));
-                setUrlErrorTest.run(URL.parse("www.google.com").await(), new PreConditionFailure("url.getScheme() cannot be null."));
+                setUrlErrorTest.run(
+                    null,
+                    new PreConditionFailure("url cannot be null."));
+                setUrlErrorTest.run(
+                    URL.parse("www.google.com").await(),
+                    new PreConditionFailure("url.hasScheme() cannot be false."));
 
                 final Action1<URL> setUrlTest = (URL url) ->
                 {

@@ -2,7 +2,7 @@ package qub;
 
 public interface HttpClientTests
 {
-    static void test(TestRunner runner)
+    public static void test(TestRunner runner)
     {
         runner.testGroup(HttpClient.class, () ->
         {
@@ -27,7 +27,7 @@ public interface HttpClientTests
         });
     }
 
-    static void test(TestRunner runner, Function1<Network,HttpClient> creator)
+    public static void test(TestRunner runner, Function1<Network,HttpClient> creator)
     {
         runner.testGroup(HttpClient.class,
             (TestResources resources) -> Tuple.create(resources.getNetwork(), resources.getParallelAsyncRunner()),
@@ -142,8 +142,8 @@ public interface HttpClientTests
                     {
                         test.assertEqual("HEAD", httpResponse.getHeaderValue("request-method").await());
                         final URL requestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost());
-                        test.assertEqual(null, requestUrl.getPort());
+                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost().await());
+                        test.assertFalse(requestUrl.hasPort());
 
                         test.assertEqual(new byte[0], httpResponse.getBody().readAllBytes().await());
                     });
@@ -156,8 +156,8 @@ public interface HttpClientTests
                     {
                         test.assertEqual("HEAD", httpResponse.getHeaderValue("request-method").await());
                         final URL requestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost());
-                        test.assertEqual(null, requestUrl.getPort());
+                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost().await());
+                        test.assertFalse(requestUrl.hasPort());
 
                         test.assertEqual(new byte[0], httpResponse.getBody().readAllBytes().await());
                     });
@@ -170,8 +170,8 @@ public interface HttpClientTests
                     {
                         test.assertEqual("HEAD", httpResponse.getHeaderValue("request-method").await());
                         final URL requestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost());
-                        test.assertEqual(8080, requestUrl.getPort());
+                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost().await());
+                        test.assertEqual(8080, requestUrl.getPort().await());
 
                         test.assertEqual(new byte[0], httpResponse.getBody().readAllBytes().await());
                     });
@@ -185,8 +185,8 @@ public interface HttpClientTests
                     {
                         test.assertEqual("HEAD", httpResponse.getHeaderValue("request-method").await());
                         final URL requestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost());
-                        test.assertEqual(null, requestUrl.getPort());
+                        test.assertEqual(IPv4Address.localhost.toString(), requestUrl.getHost().await());
+                        test.assertFalse(requestUrl.hasPort());
                         test.assertEqual("b", httpResponse.getHeaderValue("request-header-a").await());
 
                         test.assertEqual(new byte[0], httpResponse.getBody().readAllBytes().await());
@@ -200,16 +200,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("GET", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("GET", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertNull(bodyJson.getNull("body").await());
@@ -224,17 +224,17 @@ public interface HttpClientTests
                     {
                         test.assertEqual("GET", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
                         test.assertEqual("b", httpResponse.getHeaderValue("request-header-a").await());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("GET", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertEqual("b", headersJson.getString("a").await());
@@ -249,16 +249,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("POST", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("POST", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertNull(bodyJson.getNull("body").await());
@@ -273,17 +273,17 @@ public interface HttpClientTests
                     {
                         test.assertEqual("POST", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
                         test.assertEqual("b", httpResponse.getHeaderValue("request-header-a").await());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("POST", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertEqual("b", headersJson.getString("a").await());
@@ -299,16 +299,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("POST", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("POST", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertEqual(
@@ -325,16 +325,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("PUT", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("PUT", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertNull(bodyJson.getNull("body").await());
@@ -349,17 +349,17 @@ public interface HttpClientTests
                     {
                         test.assertEqual("PUT", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
                         test.assertEqual("b", httpResponse.getHeaderValue("request-header-a").await());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("PUT", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertEqual("b", headersJson.getString("a").await());
@@ -375,16 +375,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("PUT", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("PUT", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertEqual(
@@ -401,16 +401,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("DELETE", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("DELETE", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertNull(bodyJson.getNull("body").await());
@@ -425,17 +425,17 @@ public interface HttpClientTests
                     {
                         test.assertEqual("DELETE", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
                         test.assertEqual("b", httpResponse.getHeaderValue("request-header-a").await());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("DELETE", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertEqual("b", headersJson.getString("a").await());
@@ -451,16 +451,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("DELETE", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("DELETE", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertEqual(
@@ -513,16 +513,16 @@ public interface HttpClientTests
                     {
                         test.assertEqual("GET", httpResponse.getHeaderValue("request-method").await());
                         final URL headerRequestUrl = URL.parse(httpResponse.getHeaderValue("request-url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost());
-                        test.assertEqual(null, headerRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), headerRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), headerRequestUrl.getHost().await());
+                        test.assertFalse(headerRequestUrl.hasPort());
 
                         final JSONObject bodyJson = JSON.parseObject(httpResponse.getBody()).await();
                         test.assertEqual("GET", bodyJson.getString("method").await());
                         final URL bodyRequestUrl = URL.parse(bodyJson.getString("url").await()).await();
-                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme());
-                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost());
-                        test.assertEqual(null, bodyRequestUrl.getPort());
+                        test.assertOneOf(Iterable.create("http", "https"), bodyRequestUrl.getScheme().await());
+                        test.assertEqual(IPv4Address.localhost.toString(), bodyRequestUrl.getHost().await());
+                        test.assertFalse(bodyRequestUrl.hasPort());
                         final JSONObject headersJson = bodyJson.getObject("headers").await();
                         test.assertNotNull(headersJson);
                         test.assertNull(bodyJson.getNull("body").await());
@@ -531,15 +531,17 @@ public interface HttpClientTests
         });
     }
 
-    static HttpServer createHttpServer(URL requestUrl, Network network, AsyncRunner parallelAsyncRunner)
+    public static HttpServer createHttpServer(URL requestUrl, Network network, AsyncRunner parallelAsyncRunner)
     {
         PreCondition.assertNotNull(requestUrl, "requestUrl");
         PreCondition.assertNotNull(network, "network");
         PreCondition.assertNotNull(parallelAsyncRunner, "parallelAsyncRunner");
 
         final DNS dns = DNS.create();
-        final IPv4Address serverAddress = dns.resolveHost(requestUrl.getHost()).await();
-        final Integer requestPort = requestUrl.getPort();
+        final IPv4Address serverAddress = dns.resolveHost(requestUrl.getHost().await()).await();
+        final Integer requestPort = requestUrl.getPort()
+            .catchError(NotFoundException.class)
+            .await();
         final int serverPort = requestPort != null ? requestPort : 80;
 
         final TCPServer tcpServer = network.createTCPServer(serverAddress, serverPort).await();

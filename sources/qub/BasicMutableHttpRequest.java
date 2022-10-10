@@ -1,7 +1,7 @@
 package qub;
 
 /**
- * A HTTP request that will be sent create a TCPClient to a HTTP server.
+ * An {@link HttpRequest} that will be sent from a {@link TCPClient} to an {@link HttpServer}.
  */
 public class BasicMutableHttpRequest implements MutableHttpRequest
 {
@@ -60,8 +60,7 @@ public class BasicMutableHttpRequest implements MutableHttpRequest
     public BasicMutableHttpRequest setUrl(URL url)
     {
         PreCondition.assertNotNull(url, "url");
-        PreCondition.assertNotNullAndNotEmpty(url.getScheme(), "url.getScheme()");
-        PreCondition.assertNotNullAndNotEmpty(url.getHost(), "url.getHost()");
+        PreCondition.assertTrue(url.hasScheme(), "url.hasScheme()");
 
         this.url = url;
 

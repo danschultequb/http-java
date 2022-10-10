@@ -1,7 +1,8 @@
 package qub;
 
 /**
- * An HttpClient implementation that uses the default Java libraries to send HTTP requests.
+ * An {@link HttpClient} implementation that uses the default Java libraries to send
+ * {@link HttpRequest}s.
  */
 public class JavaHttpClient implements HttpClient
 {
@@ -20,7 +21,6 @@ public class JavaHttpClient implements HttpClient
         PreCondition.assertNotNull(request, "request");
         PreCondition.assertNotNullAndNotEmpty(request.getMethod(), "request.getMethod()");
         PreCondition.assertNotNull(request.getURL(), "request.getURL()");
-        PreCondition.assertNotNullAndNotEmpty(request.getURL().getHost(), "request.getURL().getHost()");
 
         return Result.create(() ->
         {
@@ -86,7 +86,7 @@ public class JavaHttpClient implements HttpClient
             }
             catch (java.net.UnknownHostException e)
             {
-                throw new HostNotFoundException(request.getURL().getHost());
+                throw new HostNotFoundException(request.getURL().getHost().await());
             }
             catch (java.io.IOException e)
             {

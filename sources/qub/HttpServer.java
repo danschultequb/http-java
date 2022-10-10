@@ -192,7 +192,7 @@ public class HttpServer implements Disposable
                         }
 
                         HttpResponse response;
-                        final String pathString = request.getURL().getPath();
+                        final String pathString = request.getURL().getPath().catchError(NotFoundException.class).await();
                         final Path path = Path.parse(Strings.isNullOrEmpty(pathString) ? "/" : pathString);
                         Indexable<String> pathTrackedValues = null;
                         Function2<Indexable<String>,HttpRequest,HttpResponse> pathAction = null;
